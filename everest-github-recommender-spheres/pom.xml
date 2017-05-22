@@ -1,0 +1,52 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>net.expertsystem.everest</groupId>
+    <artifactId>everest-github-recommender</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+  </parent>
+  <artifactId>everest-github-recommender-spheres</artifactId>
+  <packaging>war</packaging>
+  <name>everest-github-recommender-spheres</name>
+  <description>collaboration spheres user interface for the recommender</description>
+  
+ <build>
+        <finalName>spheres</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.5.1</version>
+                <inherited>true</inherited>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+			<!-- Tomcat plugin -->  
+			<plugin>  
+			 <groupId>org.apache.tomcat.maven</groupId>  
+			 <artifactId>tomcat7-maven-plugin</artifactId>  
+			 <version>2.2</version>  			 	
+			 <configuration>			         
+           		<url>http://172.16.32.89:8080/manager/text</url>
+          		<path>/spheres</path>
+        	</configuration>		
+			</plugin>             
+        </plugins>
+    </build>  
+    
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+	    <dependency>
+	    <groupId>org.tuckey</groupId>
+	    <artifactId>urlrewritefilter</artifactId>
+	    <version>4.0.3</version>
+	</dependency>
+  </dependencies>  
+</project>

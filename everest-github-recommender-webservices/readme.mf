@@ -1,0 +1,54 @@
+1. mvn archetype:generate -DarchetypeArtifactId=jersey-quickstart-webapp \
+                -DarchetypeGroupId=org.glassfish.jersey.archetypes -DinteractiveMode=false \
+                -DgroupId=com.example -DartifactId=simple-service-webapp -Dpackage=com.example \
+                -DarchetypeVersion=2.24
+2. Import the maven project in eclipse                
+3. Descargar tomcat 8.5
+4. extraer contenido
+5. exportar CATALINA_HOME = directorio de extracción
+6. Habilitar usuarios de administración
+	editar CATALINA_HOME/conf/tomcat-users.xml y añadir:
+	
+  <role rolename="manager-script"/>
+  <role rolename="manager-gui"/>
+  <user username="admin" password="" roles="manager-gui,manager-script"/>	
+	
+7. startup the server: 
+CATALINA_HOME/bin/startup.bat
+                
+8. add the tomcat plugin for maven to pom.xml in the project 
+->https://tomcat.apache.org/maven-plugin-2.2/tomcat7-maven-plugin/usage.html
+			<plugin>  
+			 <groupId>org.apache.tomcat.maven</groupId>  
+			 <artifactId>tomcat7-maven-plugin</artifactId>  
+			 <version>2.2</version>  			
+			</plugin>  
+-> This plugin uses default configuration (DON'T DO ANYTHING, ONLY INFORMATION:
+--> Tomcat manager URL of http://localhost:8080/manager
+--> Authentication details of username admin and no password
+--> Context path of /${project.artifactId}
+9.deploy the web application
+mvn tomcat7:deploy
+
+Other important goals
+* tomcat7:redeploy
+* tomcat7:undeploy
+* tomcat7:run-war	Runs the current project as a packaged web application using an embedded Tomcat server.
+* tomcat7:exec-war	Create a self executable jar file containing all necessary Apache Tomcat classes. This allows for using just java -jar mywebapp.jar to run your webapp without needing to install a Tomcat instance.
+
+-> IF DON'T WANT TO USE THE PLUGIN THEN FIX ECLIPSE NEON
+replace the existing plugin
+1. download the tomcat.core.jar from https://bugs.eclipse.org/bugs/attachment.cgi?id=262418&action=edit
+2. replace the existing tomcat.core.jar in the local installation (first, close eclipse)
+C:\Users\agarcia\.p2\pool\plugins
+	org.eclipse.jst.server.tomcat.core_1.1.800.v201602282129.jar -> renamed to *.oldjar
+	copy the downloaded jar.
+3. restart eclipse
+4. Select run on server, and configure the server as apache tomcat 9 (It does matter that it is a 8.5). Check that tomcat is stopped before launchning. 
+5. before executing the server try the following to avoid an error caused by the lack of libraries
+	-> mvn build so that the target folder is populated 
+	-> run the project on the server. This time it should work.  
+	
+
+
+                

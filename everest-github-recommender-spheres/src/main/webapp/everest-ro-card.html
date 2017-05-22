@@ -1,0 +1,337 @@
+<!--
+@license
+Copyright (c) 2015 Expert System Iberia. All rights reserved.
+-->
+<link rel="import" href="everest-shared-styles.html">
+<link rel="import" href="bower_components/polymer/polymer.html">
+<link rel="import" href="bower_components/paper-card/paper-card.html">
+<link rel="import" href="everest-log-behavior.html">
+
+<!--
+`everest-social-media-card` is a web component, which renders an everest social-media item.
+
+Example:
+
+    <everest-social-media-card
+      item-obj=' "url": "http://vico-research.com/social/41c067eb-56d1-33ef-86b6-c714a41dcfd6", //everest url for this media item
+         "type": "http://rdfs.org/sioc/ns#MicroPost",
+         "content": { 
+            "full": "some long.... full description",
+            "preview": "short preview of full",
+          },
+          "created": {
+             "timestamp": 0,
+             "formatted": "01/01/1970 00:00:00",
+             "timeAgo": "46 years ago"
+          },
+          "lang": "en", //
+          "publisher": {
+             "label": "some publisher",
+             "url": "http://example.com/"
+          },
+          "creator": {
+             "url": "http://example.com/creator",
+             "label": "Some Name"
+          },
+          "source": "http://example.com/microPost",
+          "sourceType": "MicroBlog"
+       }'>
+    </everest-social-media-card>
+
+The rendered element will consist of a card, showing the following information about the
+social media item:
+- the content: if the content is very long, only a preview is shown
+- the language
+- the author/creator
+- the date-time (when the social media item was created)
+- the publisher
+- the following actions:
+  + a link to view the original content at the publisher's site
+  + if the content is long: a toggle to swap between the preview and the full content.
+
+The `itemObj` follows the format returned by the `everest public webserver`.
+
+Height and width are specified as style attributes:
+
+    everest-media-card {
+      height: 300px;
+      width: 50em;
+    }
+
+@group everest
+@element everest-social-media-card
+@demo demo/everest-social-media-card.html
+@hero hero.svg
+-->
+<dom-module id="everest-ro-card">
+
+  <template>
+    <style include="everest-shared-styles">
+	a {
+			text-decoration:none;
+			color: inherit;
+		}
+		.sketch {
+           display: inline-block;
+           height: 64px;
+		   width: 64px;
+           border-radius: 50%;
+           color: white;
+           line-height: 64px;
+           font-size: 30px;
+           text-align: center;
+		   box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.3);
+        }
+        .out_link_icon{
+        	width: 16px;
+        	float:right;
+        }
+		div {
+  -webkit-border-radius: 5px 10px;  /* Safari  */
+  -moz-border-radius: 5px 10px;     /* Firefox */
+}
+	</style>
+    <paper-card id="ROCard" class='fancy' style="box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.3)">
+      <div class="card-content">
+	  <div class="avatar">
+        <img class="sketch" src="[[_haySketch(itemObj)]]"></div>
+        <div class="title">
+			<div class="medium">
+				<a href='{{itemObj.url}}' target='_blank'>
+				<div style="float:left">{{itemObj.value}} <img style="width:16px" src="http://www.kentgazetesi.com/images/link.png"></div>
+				</a>
+			</div> <br>
+            <div class="small">on: <span>{{itemObj.created}}</span>  by: <span>[[_getAuthorMed(itemObj)]]</span></div>
+        </div>
+      </div>
+      <div class="card-content">
+      <div class = "small"><b>Main topics: </b><span>{{itemObj.concepts}}</span></div>
+      <div class = "small"><b>Areas of knowledge: </b><span>{{itemObj.domains}}</span></div>
+	  <div class="small"><b>Description: </b><span>{{itemObj.description}}</span></div>
+        <content></content>
+      </div>
+    </paper-card>
+  </template>
+
+</dom-module>
+
+<script>
+
+  Polymer({
+
+    is: 'everest-ro-card',
+    behaviors: [everest.LogBehavior],
+
+    properties: {
+        
+      /**
+       * The media item to be displayed. Normally, this value is calculated
+       * based on the value of the href property.
+       * The object will typically be something like: 
+       *
+       *
+       *      {
+       *      lang: "en", //2-letter language code 
+       *      type: "http://rdfs.org/sioc/ns#MicroPost",
+       *      url: "http://vico-research.com/social/xxxxxxx",
+       *      content: { 
+       *          full: "some full content",
+       *          preview: "some ..",
+       *      },
+       *      created: {
+       *         "timestamp": 0,
+       *         "formatted": "01/01/1970 00:00:00",
+       *         "timeAgo": "46 years ago"
+       *      },
+       *      publisher: {
+       *          label: "some publisher",
+       *          url: "http://example.com/"
+       *      },
+       *      creator: {
+       *          label: "creator",
+       *          url: "creator url"
+       *      },
+       *      source: "http://example.com/article",
+       *      sourceType: "MicroBlog"
+       *      }
+       */
+      itemObj: {
+          type: Object,
+          observer: '_itemObjChanged'
+      }, 
+
+     /**
+      * Whether this card should provide an option for viewing the
+      * full content.
+      */
+      expandable: {
+          type: Boolean,
+          value: false
+      },
+      /**
+       * Private variable used for toggling the full and preview modes of the content.
+       */
+      _currentContent: {
+          type: String
+      }
+
+    },
+      
+    // Element Lifecycle
+    created: function() {
+        if (this.isLogDebugEnabled()) console.debug(this.localName + '#' + this.id + ' was created');
+    },
+      
+    ready: function() {
+      // `ready` is called after all elements have been configured, but
+      // propagates bottom-up. This element's children are ready, but parents
+      // are not.
+      //
+      // This is the point where you should make modifications to the DOM (when
+        // necessary), or kick off any processes the element wants to perform.
+        //console.log("The jassa attribute ", _jassa);
+    },
+
+    attached: function() {
+      // `attached` fires once the element and its parents have been inserted
+      // into a document.
+      //
+      // This is a good place to perform any work related to your element's
+      // visual state or active behavior (measuring sizes, beginning animations,
+      // loading resources, etc).
+    },
+
+    detached: function() {
+      // The analog to `attached`, `detached` fires when the element has been
+      // removed from a document.
+      //
+      // Use this to clean up anything you did in `attached`.
+    },
+
+    /**
+     * Handles changes to the `itemObj`ect underlying this card.
+     */  
+    _itemObjChanged: function(e) {
+        function shouldHideTogglePreviewBtn(content) {
+            if (this.expandable) {
+                if (content && content.full && content.preview) return false;
+                else return true;
+            } else return true;
+        }
+
+        function calcCurrent(content) {
+            //console.debug("Calculating currentContent for", content);
+            if (content && content.full) {
+                if (content.preview) {
+                    return content.preview;
+                } else {
+                    return content.full;
+                }
+            } else {
+                return "Missing content";
+            }
+        }
+
+        if (this.isLogDebugEnabled()) {
+            console.debug('itemObjChanged evt', e);
+        }
+        if (this.itemObj) {
+            var contentObj = this.itemObj.content;
+            this._currentContent = calcCurrent(contentObj);
+//            this.$.togglePreviewBtn.hidden = shouldHideTogglePreviewBtn(contentObj);
+//            console.log('updated itemObj ', this.itemObj);
+//            console.log('itemObj.content', contentObj);
+        } else this._currentContent = "Empty"
+    },
+    _getAuthorMed: function(object) {
+        return this._calcAuthor(35, object);
+    },
+    _calcAuthor: function(length, object) {
+        if (object) {
+                return this.strPreview(object.author, length);
+            }
+    },
+    
+    strPreview: function(str, maxLength) {
+        if (maxLength) {
+            if (maxLength < 1) maxLength = 20;
+        } else maxLength = 20;
+        if (str) {
+//            console.debug("string length: ", str.length);
+            if (str.length > maxLength) {
+                return str.substring(0, maxLength) + "...";
+            } else {
+                return str;
+            }
+        } else return "";
+    },
+    
+	_haySketch: function(item) {
+		 var res;
+		  if (item != null){
+			if (item.relatedImage == null){
+					res = "https://static1.squarespace.com/static/536063dee4b04c365eb473be/t/54078c96e4b003ed9c170735/1409780886590/small-team-starter-package-icon";
+			}
+			else{
+					res = item.relatedImage;
+			}
+		}
+		  return res;
+	},
+	_hayAuthor: function(item) {
+		 var res;
+		  if (item != null){
+			if (item.relatedImage == null){
+					res = "";
+			}
+			else{
+					res = " by: " + item.author;
+			}
+		}
+		return res;
+	},
+    _togglePreview: function() {
+        if (this.isLogDebugEnabled()) {
+            console.debug('toggling preview');
+        }
+        if (this.itemObj) {
+            var contentObj = this.itemObj.content;
+            if (contentObj.current === contentObj.full) {
+                if (this.isLogDebugEnabled())
+                    console.debug('Showing preview object');
+                contentObj.current = contentObj.preview;
+            } else {
+                if (this.isLogDebugEnabled())
+                    console.debug('Showing full object');
+                contentObj.current = contentObj.full;
+            }
+        } else {
+            if (this.isLogDebugEnabled())
+                console.debug('No itemObj available', this.itemObj);
+        }
+    },
+
+    _togglePreviewLabel: function(contentContent) {
+        if (this.itemObj && this.itemObj.content) {
+            if (this._currentContent === this.itemObj.content.full) {
+                return 'Collapse'
+            } else return 'Expand';
+        } else return 'Expand';
+    },
+      
+    // Element Behavior
+
+    /**
+     * E.g. Sometimes it's just nice to say hi.
+     *
+     * @param {string} greeting A positive greeting.
+     * @return {string} The full greeting.
+    sayHello: function(greeting) {
+      var response = greeting || 'Hello World!';
+      return 'everest-social-media-card says, ' + response;
+    },
+     */
+
+  });
+
+</script>

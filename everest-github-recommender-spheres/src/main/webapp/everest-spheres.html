@@ -1,0 +1,749 @@
+<!--
+@license
+Copyright (c) 2016 Expert System Iberia. All rights reserved.
+-->
+<link rel="import" href="everest-shared-styles.html">
+<link rel="import" href="bower_components/polymer/polymer.html">
+<link rel="import" href="everest-log-behavior.html">
+<link rel="import" href="everest-object-inspector-behavior.html">
+<link rel="import" href="everest-spheres-resource.html">
+<link rel="import" href="bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="bower_components/paper-tooltip/paper-tooltip.html">
+
+<!--
+`everest-spheres` is a web component, which renders a set of recommendations for
+the everest project. `Spheres` is a paradigm for building contexts of resources and
+visualising recommendations around that context.
+
+Example:
+
+    <everest-spheres
+        obj='{
+         "name": "Spheres name", 
+         "type": "http://everest.eu/voca/Sphere", 
+         "uri": "http://expertsystemlab.com/everest-spheres?context=http://dbpedia.org/resource/Berlin",
+         "inner": {
+         },
+         "inter": {},
+         "outer": {
+          }
+       }'>
+    </everest-spheres>
+
+Example using polymer binding (Where `mySpheresObj` is an object like the one shown above):
+
+    <everest-spheres
+      obj='{{mySpheresObj}}'>
+    </everest-spheres>
+
+@group everest
+@element everest-spheres
+@demo demo/everest-spheres.html
+@hero hero.svg
+-->
+<dom-module id="everest-spheres">
+
+  <template>
+      <style include="everest-shared-styles">
+       :host {
+           --circle-padding: 108px;
+
+           //the following are recommended values for everest-themed spheres
+           /*
+           --separator-color: #dbdbdb;
+           --outer-color: #E8F5E9;
+           --inter-color: #AEEA00;
+           --inner-color: #A5D6A7;
+           --center-color: #F4FF81;           
+           --center-color-2: #C6FF00;
+           */
+       }
+
+       #spherescolumn
+       {
+           margin: 0px 5px 5px 0px;
+           /* this needs to be non-static to correctly position 
+              the sphere elements, which have position absolute
+           */
+           position: relative;
+       }
+
+       everest-spheres-resource {
+           /* places elements roughtly in the center of the sphere */
+           top: 45%;
+           left: 45%;
+           position: absolute;
+		   cursor: pointer;
+       }
+       
+       .circle,
+       .outercircle,
+       .innercircle,
+       .intercircle,
+       .centercircle {
+           height: 100%;
+           width: 100%;
+	         background: #FFF;
+           border: 1px solid azure;
+	         border-radius: 50%;
+	         padding: var(--circle-padding, 10px);
+           box-sizing: border-box;           
+       }
+
+       .outercircle {
+	    box-shadow: 0 20px 50px 0 rgba(0, 0, 0, 0.3);
+           background: var(#337ab7, #337ab7);
+       }
+
+       .intercircle {
+           background: var(#75b1e5, #75b1e5);
+       }
+
+       .innercircle {
+           background: var(#bfe1ff, #bfe1ff);
+       }
+
+       .innercircle.droptarget {
+           box-shadow: 0 0 8px rgba(27, 94, 32, .8);
+       }
+       
+       .centercircle {
+           background: var(--center-color, #333333);
+           padding: 35px;
+       }
+       .id_user_label{
+			position: absolute;
+			top: 335px;
+			left: 334px;
+			text-align: center;
+			font-size: 12px;
+			color: #337ab7;
+			}
+			.inner_label{
+			position: absolute;
+			top: 490px;
+    		left: 340px;
+			text-align: center;
+			font-size: 12px;
+			color: azure;
+			}
+			.inter_label{
+			position: absolute;
+			top: 590px;
+    		left: 304px;
+			text-align: center;
+			font-size: 12px;
+			color: #2C64DD;
+			}
+			.outer_label{
+			position: absolute;
+			top: 700px;
+    		left: 305px;
+			text-align: center;
+			font-size: 12px;
+			color: #91B0D5;
+			}
+		.imagen{
+               height: 56px;
+               width: 56px;
+               border-radius: 50%;
+               color: white;
+               line-height: 56px;
+               font-size: 24px;
+               text-align: center;
+	   }
+      </style>
+     	 <paper-tooltip class="custom" for="id_user_label" id="tooltipUser">
+				[[iduserlabel]]
+		</paper-tooltip>
+		 <div id="spherescolumn">
+         <div class="circle outercircle">
+         <div class="outer_label">Other recommendation</div>
+             <template is="dom-repeat" items="[[obj.outer]]">
+                 <everest-spheres-resource
+                     selected$="[[isSelected(item, selected)]]"
+                     item="[[item.recommended]]" style$='[[_calcStyle("outer", index, obj.outer.length)]]'
+                     on-spheres-resource-tap="_handleResourceTap"
+                     draggable="true"
+                     on-dragstart="_handleDragStart"
+                     on-dragend="_handleDragEnd"
+                     ></everest-spheres-resource>
+             </template>
+             <div class="circle intercircle">
+             <div class="inter_label">Main recommendation</div>
+                 <template is="dom-repeat" items="[[obj.inter]]">
+                     <everest-spheres-resource
+                         selected$="[[isSelected(item, selected)]]"
+                         item="[[item.recommended]]"
+                         style$='[[_calcStyle("inter", index, obj.inter.length)]]'
+                         on-spheres-resource-tap="_handleResourceTap"
+                         draggable="true"
+                         on-dragstart="_handleDragStart"
+                         on-dragend="_handleDragEnd"
+                         ></everest-spheres-resource>
+                 </template>
+
+                 <div class="circle innercircle"
+                      on-tap="_handleCircleTap"
+                      on-dragenter="_handleDragEnter"
+                      on-dragleave="_handleDragLeave"
+                      on-dragover="_handleDragOver"
+                      on-drop="_handleDrop">
+                      <div class="inner_label">Context</div>
+					  <div class="id_user_label" id="id_user_label"><!--[[iduser]]-->
+					  <img class="imagen" src=[[avatarUserAvailable(iduser)]]></img></div>
+                     <template is="dom-repeat" items="{{obj.inner}}">
+                         <everest-spheres-resource
+                            selected$="[[isSelected(item, selected)]]"
+                            removable
+                            item="[[item.recommended]]"
+                            style$='[[_calcStyle("inner", index, obj.inner.length)]]'
+                            on-spheres-resource-tap="_handleResourceTap"
+                            on-spheres-resource-remove="_handleResourceRemove">
+                         </everest-spheres-resource>
+                     </template>
+                     <div class="circle centercircle">
+                         
+                     </div>
+                 </div>
+             </div>
+         </div>
+		 </div>
+		 
+  </template>
+
+</dom-module>
+
+<script>
+
+  Polymer({
+
+    is: 'everest-spheres',
+
+    behaviors: [everest.LogBehavior, everest.ObjectInspectorBehavior],
+      
+    properties: {
+        
+      /**
+       * The value object to be displayed.
+       * The object will typically be something like: 
+       *
+       *      {
+       *         "name": "Spheres name", 
+       *         "type": "http://everest.eu/voca/Sphere", 
+       *         "uri": "http://expertsystemlab.com/everest-spheres?context=http://dbpedia.org/resource/Berlin",
+       *         "inner": {
+       *         },
+       *         "inter": {},
+       *         "outer": {}
+       *      }
+       *
+       */
+      obj: {
+          type: Object,
+          observer: '_valueObjChanged',
+	  value: {inner:[],inter:[],outer:[]}
+      },
+
+      /**
+       * The currently selected `everest resource` in this sphere. This will be 
+       * one of the objects in the `obj`, in particular one of the resources in the
+       * `inner`, `inter` or `outer` spheres.
+       */
+	  
+	  iduser:{
+		type: String,
+		value: ""
+	  },
+	  
+	  iduserlabel:{
+			type: String,
+			value: ""
+		  },
+      
+      selected: {
+          type: Object,
+          readOnly: true,
+          notify: true
+      }
+    },
+
+    // Element Lifecycle
+    created: function() {
+          if (this.isLogDebugEnabled()) {
+              console.debug(this.localName + '#' + this.id + ' was created');
+          }
+    },
+      
+    ready: function() {
+      // `ready` is called after all elements have been configured, but
+      // propagates bottom-up. This element's children are ready, but parents
+      // are not.
+      //
+      // This is the point where you should make modifications to the DOM (when
+        // necessary), or kick off any processes the element wants to perform.
+        //console.log("The jassa attribute ", _jassa);
+//        this._renderCanvas();
+    },
+
+    attached: function() {
+      // `attached` fires once the element and its parents have been inserted
+      // into a document.
+      //
+      // This is a good place to perform any work related to your element's
+      // visual state or active behavior (measuring sizes, beginning animations,
+      // loading resources, etc).
+    },
+
+    detached: function() {
+      // The analog to `attached`, `detached` fires when the element has been
+      // removed from a document.
+      //
+      // Use this to clean up anything you did in `attached`.
+    },
+
+    /**
+     * Returns `true` if `item` is equal to the `selected` item.
+     */
+    isSelected: function(item, selected) {
+          var result = this.referToSameResource(item.recommended, selected);
+          if (this.isLogDebugEnabled()) {
+              console.debug("Item is selected ", item, selected, result);
+          }
+          return result;
+    },
+
+    /**
+      * Returns the number of resources contained in the inner circle
+      */
+    innerCount: function() {
+        if (this.obj && this.obj.inner && this.obj.inner.length) {
+            return this.obj.inner.length;
+        } else return 0;
+    },
+	
+    avatarUserAvailable: function(usuario){
+		var res = "";
+		if(usuario != ""){
+			res = "icon-user.png";
+// 			res = "https://jukeperformance.com/wp-content/uploads/2016/07/simplified-genetics-researcher-icon-300x300.png";
+		}
+		return res;
+	},
+    
+     _handleResourceTap: function(e, detail) {
+        if (this.isLogDebugEnabled()) {
+            if (this.selected) {
+                console.debug("deselecting ", this.selected);
+            } else {
+                console.debug("no previous selection");
+            }
+        }
+        this._setSelected(detail.obj);
+    },  
+    referToSameResource: function(resourceObjA, resourceObjB) {
+          if (resourceObjA && resourceObjA.url && resourceObjB && resourceObjB.url) {
+              return resourceObjA.url === resourceObjB.url;
+          } else {
+              return false;
+          }
+    },
+
+    isInInner: function(resourceObj) {
+        if (resourceObj && resourceObj.url) {
+            var index = this._indexOfResource(this.obj.inner, resourceObj);
+            if (this.isLogDebugEnabled()) log.debug("Index of object in inner:  ", index, resourceObj);
+            return (index >= 0);
+        }
+        return false;
+    },
+
+    
+      
+    addToInner: function(resourceObj) {
+	console.debug ("resourceObj: ", resourceObj);
+	if(this.obj){
+		if (this.obj.inner.length < 3){
+			console.debug ("Elements in inner: ", this.obj.inner.length);
+				this.push("obj.inner", resourceObj);
+				this._recalcStyles('inner');
+		}
+		else{
+	        console.debug ("There are too much elements in inner: ", this.obj.inner.length);
+		}
+		}
+    },
+
+    _recalcStyles: function(circle) {
+        const selector = '.' + circle + 'circle';
+        const circleElt = this.$$(selector);
+        const elts = circleElt.querySelectorAll('everest-spheres-resource');
+        console.debug("TODO: recalc styles for ", elts);
+    },
+      _handleDragStart: function(e) {
+          // this /e.target is the source node (the sphere being dragged)
+          console.debug("Handling dragstart for ", e);
+          e.target.style.opacity = '0.4';
+          this.$$(".innercircle").classList.add('droptarget');
+
+          //restricts the type of drag. Possible values: none, copy, copyLink, copyMove,
+          // link, linkMove, move, all and uninitialized
+          e.dataTransfer.effectAllowed = 'move';
+          const domString = JSON.stringify(e.target.item);
+          try {
+              e.dataTransfer.setData("application/json", domString);
+          } catch (err) {
+              console.debug("Failed to set dataTransfer data");
+              /* in IE10 the data type *must* be 'text', so try it this way...
+                                                                            see http://stackoverflow.com/questions/26213011/html5-dragdrop-issue-in-internet-explorer-datatransfer-property-access-not-pos
+              */
+              e.dataTransfer.setData("text", domString);
+          }
+          console.debug("set dataTrasfer.data to application/json and the everest-spheres-resource.item ", e.target.item, e);
+      },
+
+      _handleCircleTap: function(e) {
+        console.debug("handling circle tap", e);
+      },
+      
+      _handleDragEnd: function(e) {
+          console.debug("Handling dragend for ", e);
+          e.target.style.opacity = '1.0';
+          this.$$(".innercircle").classList.remove('droptarget');
+      },
+
+      _handleDrop: function(e) {
+          
+	  function dataTransferAsJson(dataTransfer) {
+              var json;
+              try {
+                  json = dataTransfer.getData("application/json");
+              } catch (err) {
+                  //no app/json? try text
+                  json = dataTransfer.getData("text");
+              }
+              return JSON.parse(json);
+          }
+
+//          if (this.spheresObj.inner.length == 3) {
+//	      console.debug("There are too much elements in inner: ", this.spheresObj.inner.length);
+//	      break;
+//	  }
+          // this / e.target is current target element.
+          console.debug("Handling drop", e);
+          if (e.stopPropagation) {
+              e.stopPropagation(); // stops the browser from redirecting.
+          }
+          
+          // See the section on the DataTransfer object.
+          var itemToAddToInner = {
+              recommended: {},
+              confidence: 1
+          };
+          try {
+              itemToAddToInner.recommended = dataTransferAsJson(e.dataTransfer);
+          } catch (err) {
+              console.debug("Failed to process the drop data", err);
+              return false;
+          }
+          
+          console.debug("TODO: remove from inter or outer and add to inter", itemToAddToInner);
+          var removed = this._removeResourceObjFromCircle('obj.inter', itemToAddToInner.recommended);
+          if (!removed) {
+              removed = this._removeResourceObjFromCircle('obj.outer', itemToAddToInner.recommended);
+              console.log("removed from outer", removed);
+          } else {
+              console.log("removed from inter", removed);
+          }
+          console.debug("Now add to inner...");
+          this.addToInner(itemToAddToInner);
+          
+          var newDetail = {
+              x: e.detail.x,
+              y: e.detail.y,
+              moved: itemToAddToInner
+          }
+          this.fire('spheres-resource-moved', newDetail);
+          
+          return false;          
+      },
+      _handleDragEnter: function(e) {
+          console.debug("Handling dragenter for ", e);
+      },
+
+      _handleDragLeave: function(e) {
+          console.debug("Handling dragleave for ", e);
+      },
+
+      _handleDragOver: function(e) {
+//          console.debug("Handling dragover for ", e);
+          if (e.preventDefault) {
+              // Necessary. Allows us to drop. Otherwise browser may navigate away
+              e.preventDefault();
+          }
+          //TODO: check dataTransfer is compatible with inner circle!!
+          
+          // let user know they can move the data here
+          // other options would be none, copy or link
+          e.dataTransfer.dropEffect = 'move';  
+          return false;          
+      },
+      
+
+
+    _indexOfResource: function(array, resourceObj) {
+        for (var i=0; i< array.length; i++){
+            if (this.referToSameResource(array[i].recommended, resourceObj)) return i;
+        }
+    },
+
+    _removeResourceObjFromCircle: function(pathToCircle, toRemove) {
+        const arr = this.get(pathToCircle);
+        if (!arr) {
+            console.error("No array found for ", pathToCircle);
+            return false;
+        }
+        var index = this._indexOfResource(arr, toRemove);        
+        console.debug("Object to remove at " + pathToCircle + "." + index);
+        if (typeof index === 'undefined' || index === null || index < 0) {
+            console.error("Object ", toRemove, "cannot be removed as it is not in ", pathToCircle, arr);
+            return false;
+        }
+        
+        var removed = this.splice(pathToCircle, index, 1);
+        if (this.isLogDebugEnabled()) console.debug("new spheres obj: ", this.obj);
+        return removed;
+    },
+      
+    _handleResourceRemove: function(e, detail) {
+        var toRemove = detail.obj;
+        if (this.isLogDebugEnabled()) {
+            console.debug("Handling removal of resource.", toRemove);
+            console.debug("old spheres obj: ", this.obj);
+        }
+
+        const pathToCircle = 'obj.inner';
+        const removed = this._removeResourceObjFromCircle(pathToCircle, toRemove);
+        if (removed) {
+            if (this.isLogDebugEnabled()) console.debug("Removed ", removed);
+//            this.set('obj.inner', this.obj.inner);
+            // do I need to fire a change event for `obj`?
+            // do I need to update the `selected`?
+            var newDetail = {
+                x: detail.x,
+                y: detail.y,
+                removed: toRemove
+            }
+            this.fire('spheres-resource-removed', newDetail);
+        } else {
+            if (this.isLogDebugEnabled()) console.debug("Could not remove object", removed);
+        }
+    },
+      
+    _renderCanvas: function() {
+    		var canvas = this.$.myCanvas; //document.getElementById('myCanvas');
+		    var context = canvas.getContext('2d');
+		    var centerX = canvas.width / 2;
+		    var centerY = canvas.height / 2;
+		    var radiusBig = 300;
+		    var radiusMid = 210;
+		    var radiusSmall = 120;
+		    var radiusCenter = 30; 
+
+        var separatorColor = "dbdbdb"; //divider color //"#848484";
+        var outerColor = "#E8F5E9"; //green 50  //"#fff";
+        var interColor = "#AEEA00"; //lime a700  //"#b4b4b4";
+        var innerColor = "#A5D6A7"; //green 200 //"#a7e4ff";
+        var centerFromColor = "#F4FF81"; //lime a100  //"#ffe69a";
+        var centerToColor = "#C6FF00"; //lime a400 //"#FEBF00";
+        
+		    //big circle
+		    context.beginPath();
+		    context.arc(centerX, centerY, radiusBig, 0, 2 * Math.PI, false);
+		    context.fillStyle = outerColor;
+		    context.fill();
+		    context.lineWidth = 1;
+		    context.strokeStyle = separatorColor;
+		    context.stroke();
+        
+		    //mid circle
+		    context.beginPath();
+		    context.arc(centerX, centerY, radiusMid, 0, 2 * Math.PI, false);
+		    context.fillStyle = interColor; //'#b4b4b4';
+		    context.fill();
+		    context.lineWidth = 1;
+		    context.strokeStyle = separatorColor; //'#848484';
+		    context.stroke();
+        
+		    //small circle
+		    context.beginPath();
+		    context.arc(centerX, centerY, radiusSmall, 0, 2 * Math.PI, false);
+		    context.fillStyle = innerColor; //'#a7e4ff';
+		    context.fill();
+		    context.lineWidth = 1;
+		    context.strokeStyle = separatorColor; //'#848484';
+		    context.stroke();
+        
+		    //center
+		    context.beginPath();
+		    context.arc(centerX, centerY, radiusCenter, 0, 2 * Math.PI, false);
+		    var grd =context.createRadialGradient(centerX, centerY, 10, centerX, centerY, radiusSmall);
+		    grd.addColorStop(0, centerFromColor); //'#ffe69a');
+		    grd.addColorStop(1, centerToColor); //'#FEBF00');
+		    context.fillStyle=grd;
+		    context.fill();
+		    context.lineWidth = 1;
+		    context.strokeStyle = separatorColor; //'#848484';
+		    context.stroke();
+    },
+      
+    _valueObjChanged: function(e) {
+        if (this.isLogDebugEnabled()) {
+            console.debug('valueObjChanged evt', e);
+            if (this.obj) {
+                console.debug('updated value obj ', this.obj);
+            }
+        }
+    },
+
+    /**
+     * Uses the scores in the inter and outer circles to calculate a `median` and
+     * `minimal` level (which can be used to calculate a 'normalized' colour 
+     * indicating the score for a resource).
+     * It also calculates a `normalFactor` which can be used to normalize the 
+     * original scores for the resources.
+     */
+    _calcNormalScores: function() {
+	      ////calcular umbral de colores
+	      var minUmb=5;
+	      var medUmb=10;
+	      var topScore=50;
+	      var normalFactor=0;
+        
+        var inter = this.obj.inter;
+//            console.debug("intermediateCircle", inter);
+        var outer = this.obj.outer;
+  //          console.debug("externalCircle", outer);
+	      if (inter && inter.length>0){
+		        var topScore=parseFloat(inter[0].score);
+		        var lastItem = inter[inter.length-1];
+		        if (outer && outer.length > 0)
+			          lastItem = outer[outer.length-1];
+		        var bottomScore = parseFloat(lastItem.score);
+		        medUmb=(topScore+bottomScore)/2.2;
+		        minUmb=(bottomScore+medUmb)/2.2;
+	      }
+	          
+	      normalFactor=100/topScore;
+        return {
+            minUmb: minUmb,
+            medUmb: medUmb,
+            normalFactor: normalFactor
+        };
+    },
+    _calcSpheresParams: function() {
+        const spheresDimensions = this._calcSpheresDimensions();
+        if (this.isLogDebugEnabled()) {
+//            console.debug("spheres dimensions", spheresDimensions);
+        }
+        const normScores = this._calcNormalScores();
+          
+        const radia = {
+		        inner: spheresDimensions.radiusCenter + spheresDimensions.resourceWidth, // 75 center.style.padding + spheresDimensions.resourceWidth
+		        inter : spheresDimensions.radiusInner + spheresDimensions.resourceWidth, //165, // center.style.padding + inner.style.padding + resourceWidth
+		        outer : spheresDimensions.radiusInter + spheresDimensions.resourceWidth //255, // center.style.padding + inner.style.padding + inter.style.padding
+        }
+	      return {
+            obj: this.obj,
+		        centerX : spheresDimensions.centerX-spheresDimensions.resourceWidth,
+		        centerY : spheresDimensions.centerY-spheresDimensions.resourceWidth+spheresDimensions.resourceCaptionHeight,
+            radia: radia,
+		        minUmb : normScores.minUmb,
+		        medUmb : normScores.medUmb,
+		        normalFactor: normScores.normalFactor
+	      };
+    },
+      
+    /**
+     * Calculates the style for the resource with `index` in a given `circle` that has a 
+     * certain number of `valsInCircle`. It does this by calculating the top and left values for the 
+     * resource based on the dimensions of the spheres.
+     * @deprecated use `_calcTransformRotateResourceStyle` instead
+     */
+    _calcTopLeftResourceStyle: function(circle, index, valsInCircle) {
+        function calcPosition(params, radius, perc) {
+	          return {
+		            x : params.centerX + radius * Math.cos(Math.PI/2 + 2*Math.PI*perc),
+		            y : params.centerY + radius * Math.sin(Math.PI/2 + 2*Math.PI*perc)
+	          }
+        }
+
+	    const params = this._calcSpheresParams();
+        const radius = params.radia[circle];
+        const perc = index / valsInCircle;
+        const position = calcPosition(params, radius, perc);
+        var result = "left:"+position.x+"px; top:"+position.y+"px;"; 
+        if (this.isLogDebugEnabled()) {
+            console.debug("style for item " + index + " of " + valsInCircle + " in " + circle, result);
+        }
+        return result;
+    },
+
+    /**
+     * Calculates the style for the resource with `index` in a given `circle` that has a 
+     * certain number of `valsInCircle`. It does this by specifying a css rotation transform around 
+     * the center of the spheres.
+     */
+    _calcTransformRotateResourceStyle: function(circle, index, valsInCircle) {
+	    const params = this._calcSpheresParams();
+        const radius = params.radia[circle];
+        const perc = index / valsInCircle;
+        const degrees = 360 * perc;
+		var result = "left:" + params.centerX +  "px;" +
+                     	     "top:" + params.centerY + "px;" +
+                     	     "transform: rotate("+degrees+"deg) translateY(" + radius + "px) rotate(-"+degrees+"deg);";
+		if (this.isLogDebugEnabled()) {
+            console.debug("style for item " + index + " of " + valsInCircle + " in " + circle, result);
+        }
+        return result;
+    },
+    _calcStyle: function(circle, index, valsInCircle) {
+        //return this._calcTopLeftResourceStyle(circle, index, valsInCircle);
+        return this._calcTransformRotateResourceStyle(circle, index, valsInCircle);
+    },
+
+    _calcSpheresDimensions: function() {
+        const divGrid = this.$.spherescolumn;
+        const centerCircle = this.$$('.centercircle');
+        const innerCircle = this.$$('.innercircle');
+        const interCircle = this.$$('.intercircle');
+        const outerCircle = this.$$('.outercircle');
+        
+        const spheresDimensions = {
+            centerX: divGrid.clientWidth / 2,
+            centerY: divGrid.clientHeight / 2,
+            radiusCenter: centerCircle.clientWidth / 2,
+            radiusInner: innerCircle.clientWidth / 2,
+            radiusInter: interCircle.clientWidth / 2,
+            radiusOuter: outerCircle.clientWidth / 2,
+            resourceWidth: 40, // px resources are about 80 x 66.67 
+            resourceCaptionHeight: 0 //px 16.7; //was 55 in APA 
+        }
+        return spheresDimensions;
+    },
+    // Element Behavior
+
+    /**
+     * E.g. Sometimes it's just nice to say hi.
+     *
+     * @param {string} greeting A positive greeting.
+     * @return {string} The full greeting.
+    sayHello: function(greeting) {
+      var response = greeting || 'Hello World!';
+      return 'everest-spheres says, ' + response;
+    },
+     */
+
+  });
+
+</script>

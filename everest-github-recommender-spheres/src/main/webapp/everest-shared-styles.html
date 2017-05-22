@@ -1,0 +1,110 @@
+<link rel="import" href="bower_components/polymer/polymer.html">
+
+<dom-module id="everest-shared-styles">
+  <template>
+      <style>
+       :root {
+           --everest-tag: #679B00;
+           --everest-green-600: #65842E;
+           --everest-green-500: #7D9B3C;
+           --everest-green-400: #75AF00;
+           --everest-light-yellow: #FFFFB2;
+           --everest-gray-500: 	#787878;
+           --everest-gray-200: #f5f5f5;
+       }
+       :host {
+           display: block;
+           box-sizing: border-box;
+       }
+
+       paper-card {
+           width: 100%; # use all available space
+           margin-bottom: 16px;
+       }
+
+       .small-avatar {
+           display: inline-block;
+           height: 48px;
+           width: 48px;
+           border-radius: 50%;
+           background: #337ab7;
+           color: white;
+           line-height: 48px;
+           font-size: 24px;
+           text-align: center;
+       }
+       
+       .avatar {
+           display: inline-block;
+           height: 64px;
+           width: 64px;
+           border-radius: 50%;
+           background: white;
+           color: white;
+           line-height: 64px;
+           font-size: 30px;
+           text-align: center;
+       }
+       .fancy .title {
+           position: absolute;
+           top: 30px;
+           left: 100px;
+           color: #337ab7;
+       }
+       .fancy .card-content {
+           min-width: 340px;
+       }
+       .fancy img {
+           width: 100%;
+       }
+       .fancy .big {
+           font-size: 22px;
+           padding: 4px 0 4px;
+           color: var(--everest-grey-500);
+       }
+       .fancy .medium {
+           font-size: 16px;
+           padding-bottom: 8px;
+       }
+       .fancy .small {
+           font-size: 12px;
+           padding-bottom: 4px;
+       }
+       .fancy {
+           --iron-icon-height: 32px;
+           --iron-icon-width: 32px;
+       }
+       .everest-card {
+           --paper-card-header-color: #337ab7;
+       }
+
+       @media (max-width: 600px) {
+           .avatar {
+               display: inline-block;
+               height: 56px;
+               width: 56px;
+               border-radius: 50%;
+               background: var(--everest-green-600);
+               color: white;
+               line-height: 56px;
+               font-size: 24px;
+               text-align: center;
+           }
+           .fancy .big {
+               font-size: 18px;
+               padding: 4px 0 4px;
+               color: var(--everest-grey-500);
+           }
+           .fancy .medium {
+               font-size: 14px;
+               padding-bottom: 8px;
+           }
+           .fancy .small {
+               font-size: 10px;
+               padding-bottom: 4px;
+           }
+      }
+       
+    </style>
+  </template>
+</dom-module>

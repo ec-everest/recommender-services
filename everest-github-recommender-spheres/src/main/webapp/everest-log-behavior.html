@@ -1,0 +1,49 @@
+<link rel="import" href="bower_components/polymer/polymer.html">
+
+<script>
+ window.everest = window.everest || {};
+ /**
+  * Facility to control how much information is logged by elements by setting a logLevel 
+  * property. Implementing elements must then check their level
+  * whenever calling `console.log` or `console.debug`, etc.`
+  * For example:
+  * 
+  *      if (this.isLogDebugEnabled()) {
+  *         console.debug('my debug message');
+  *      }
+  *
+  * @polymerBehavior everest.LogBehavior 
+  */
+ everest.LogBehavior = {
+     properties: {
+         /**
+          * Indicates the logLevel for this component. Possible values, from less verbose to
+          * more verbose, are:
+          *   * ERROR
+          *   * INFO (default)
+          *   * DEBUG
+          *   * TRACE
+          */
+         logLevel: {
+             type: String,
+             value: 'INFO'
+         }
+
+     },
+
+     /**
+      * Determines whether the `logLevel` is at least `DEBUG`
+      */
+     isLogDebugEnabled: function() {
+        return this.logLevel === "DEBUG" || this.isLogTraceEnabled();
+     },
+
+     /**
+      * Determines whether the `logLevel` is at least `DEBUG`
+      */
+     isLogTraceEnabled: function() {
+        return this.logLevel === "TRACE";
+     }
+     
+ }
+</script>

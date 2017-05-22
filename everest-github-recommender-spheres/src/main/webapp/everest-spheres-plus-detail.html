@@ -1,0 +1,1109 @@
+<!--
+@license
+Copyright (c) 2016 Expert System Iberia. All rights reserved.
+-->
+<link rel="import" href="bower_components/polymer/polymer.html">
+<link rel="import" href="everest-shared-styles.html">
+<link rel="import" href="everest-log-behavior.html">
+<link rel="import" href="everest-object-inspector-behavior.html">
+<link rel="import" href="everest-spheres.html">
+<link rel="import" href="everest-ro-card.html">
+<link rel="import" href="everest-scientist-card.html">
+<link rel="import" href="bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="bower_components/paper-item/paper-item.html">
+<link rel="import" href="bower_components/iron-list/iron-list.html">
+<link rel="import" href="bower_components/paper-input/paper-input.html">
+<link rel="import" href="bower_components/iron-collapse/iron-collapse.html">
+
+<!--
+`everest-spheres-plus-detail` is a web component, which renders an `everest-spheres` and links its `selected` value to a `detail` card.
+
+Example:
+
+    <everest-spheres-plus-detail
+        baseeverestServiceUrl='http://example.com'>
+    </everest-spheres-plus-detail>
+
+@group everest
+@element everest-spheres-plus-detail
+@demo demo/everest-spheres-plus-detail.html
+@hero hero.svg
+-->
+<dom-module id="everest-spheres-plus-detail">
+  <template>
+      <style include="everest-shared-styles">
+	  
+	  :root {
+           --error-color: red;
+           --inner-color: #ACD1E9;
+           --center-color: #ffffff;           
+           --separator-color: #dbdbdb;
+           --outer-color: #C1DAD6;
+           --inter-color: #F5FAFA;
+           --center-color-2: #c6f;
+       }
+       body {
+		background-color: white;
+         <!--  background-color: var(--paper-grey-50); -->
+       }
+		:host {
+			display: block;
+			@apply(--paper-font-common-base);
+			font-family: Helvetica;
+        }
+		::-webkit-scrollbar
+		{
+			width: 5px;  /* for vertical scrollbars */
+			height: 5px; /* for horizontal scrollbars */
+		}
+		::-webkit-scrollbar-track
+		{
+			background: rgba(0, 0, 0, 0.1);
+		}
+		::-webkit-scrollbar-thumb
+		{
+			background: rgba(0, 0, 0, 0.2);
+		}
+		.menu_left{
+			margin-top: 3px;
+			margin-left: 3px;
+			margin-bottom: 3px;
+			width: 34%;
+			float: left;
+			background-color: white;
+			padding: 20px;
+			border: 2px solid #337ab7;
+			box-shadow: 0 10px 25px 0 rgba(0, 0, 0, 0.3);
+			height:90%;
+			position: absolute;
+			
+		}
+	   .lists{
+			position:static;
+		}
+		.no_ros{
+			font-size: 12px;
+			color:#CCCCCC;
+			text-align:center;
+		}
+	   .left_list{
+			float:left;
+			width: 50%;
+		}
+	   .right_list{
+			float: right;
+			width: 50%;
+		}
+		.searching {
+			height: 15px;
+    	}
+		.searching_scientist{
+			height: 15px;
+			margin-left: 1%;
+		}
+		.toolbar {
+			color: #337ab7;
+			font-size: 18px;
+			margin-left: 1%;
+			text-align: center;
+        }
+		paper-input{
+			margin-left: 7%;
+			margin-right: 7%;
+		}
+		.listing{
+			margin-left:1%;
+			background-color:white;
+		}
+		.type_of_list{
+			font-size: 15px;
+			text-align: center;
+			padding: 5px;
+			color: #FFFFFF;
+			border: 1px solid white;
+		}
+	   .iron-list-0 {
+			color:  #585a61;
+			display: block;
+			position: relative;
+			max-height: 200px;
+			cursor: pointer;
+			font-size: 12px;
+			text-align: center;
+			color: #FFFFFF;
+		}
+		.pad {
+			@apply(--layout-flex);
+			@apply(--layout-vertical);
+        }
+		.primary{
+			padding: 5px;
+			border: 1px solid rgba(0, 0, 0, 0.1);
+			color: black;
+		}
+		.subtitle_chng{
+			font-size: 13px;
+			color: #337ab7;
+			position:absolute;
+		}
+		.card {
+			width: 90%;
+			margin-left: 1%;
+			float: left;
+			top: 54%;
+			position: absolute
+		}
+  		.right  {
+			margin-left: 45%;
+			width: 730px;
+			margin-top: 20px;
+        }
+		.pie_img1{
+			position:absolute;
+			float: right;
+			bottom: 20px;
+			right: 120px;
+			width: 80px;
+		}
+		.pie_img2{
+			position: absolute;
+			float: right;
+			right: 220px;
+			bottom: 10px;
+			width: 80px;
+
+		}
+		.pie_img3{
+			position:absolute;
+			float: right;
+			bottom: 20px;
+			right: 20px;
+			width: 80px;
+		}
+		.paper-spinner-0 {
+    display: inline-block;
+    position: absolute;
+    right: 20px;
+    bottom: 40px;
+    width: 28px;
+    height: 28px;
+	}
+		.sketch {
+           display: inline-block;
+           height: 50px;
+		   width: 50px;
+		   float: right;
+           border-radius: 50%;           
+           line-height: 64px;
+        }
+        .head_card_user{
+        	float:right;
+        	border: 2px solid #337ab7;
+        	cursor: pointer;
+        	z-index: 1;
+        	position: relative;
+        }
+        .card_user{
+        	color:#337ab7;
+        	width: 220px;
+        }
+        .logout{
+        	font-size: 10px;
+        }
+  .custom-right {
+    --paper-tooltip-background: #337ab7;
+    --paper-tooltip-text-color: white;
+    --paper-tooltip: {font-size: 14px;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right:8px solid #75b1e5;
+    text-align:center;}
+  }
+  .custom-left {
+    --paper-tooltip-background: #337ab7;
+    --paper-tooltip-text-color: white;
+    --paper-tooltip: {font-size: 14px;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-left:8px solid #75b1e5;
+    text-align:center;}
+  }
+  .custom-top { 
+  	--paper-tooltip-background: #337ab7;
+    --paper-tooltip-text-color: white;
+    --paper-tooltip: {font-size: 14px;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top:8px solid #75b1e5;
+    text-align:center;}
+	} 
+
+  .custom-bottom {
+    --paper-tooltip-background: #337ab7;
+    --paper-tooltip-text-color: white;
+    --paper-tooltip: {font-size: 14px;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom:8px solid #75b1e5;
+    text-align:center;}
+  }
+   .custom2-right {
+   --paper-tooltip-opacity: 1;
+    --paper-tooltip-background: white;
+    --paper-tooltip-text-color: #337ab7;
+    --paper-tooltip: {font-size: 14px;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right:8px solid #75b1e5;
+    text-align:center;}
+  }
+  .custom2-left {
+  	--paper-tooltip-opacity: 1;
+  	--paper-tooltip-background: white;
+    --paper-tooltip-text-color: #337ab7;
+    --paper-tooltip: {font-size: 14px;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-left:8px solid #75b1e5;
+    text-align:center;}
+  }
+  .custom2-top { 
+  	--paper-tooltip-opacity: 1;
+  	--paper-tooltip-background: white;
+    --paper-tooltip-text-color: #337ab7;
+    --paper-tooltip: {font-size: 14px;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top:8px solid #75b1e5;
+    text-align:center;}
+	} 
+
+  .custom2-bottom {
+  	--paper-tooltip-opacity: 1;
+    --paper-tooltip-background: white;
+    --paper-tooltip-text-color: #337ab7;
+    --paper-tooltip: {font-size: 14px;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom:8px solid #75b1e5;
+    text-align:center;}
+  }
+  .tutorial{
+  	font-size: 12px;
+  	color: #337ab7;
+   	position: absolute;
+    top: 80px;
+    right: 10px;
+    cursor:pointer;
+    z-index: 1;
+  }
+        
+   </style>
+   <!-- binds the `selected` property of the everest-spheres to a local property `resourceToShow`-->
+   
+	<button class="head_card_user" on-tap="_toggleCollapseUser" style="background-color:[[userAvalaibleGray(iduser)]]">
+		<img class="sketch"
+					style="background-color:[[userAvalaibleGray(iduser)]];" 
+					src="icon-user.png">
+<!-- 					src="https://jukeperformance.com/wp-content/uploads/2016/07/simplified-genetics-researcher-icon-300x300.png">	 -->
+					<iron-collapse id="collapseUser">
+						<div class="card_user">[[userAvalaibleLoggedText(iduser)]] <br><b>[[iduserlabel]]</b><br>
+						<a class="logout" href="[[baseeverestServiceUrl]]/cleanCookies" 
+										  style="text-align:right">[[logoutAvalaibleText(iduser)]]</a>
+						</div>
+					</iron-collapse>
+	</button>
+
+ 	<div class="tutorial" id="tutorial" on-tap="_handleStartTutorial">
+ 		<div style="float:left">[[inicioTutorialFirstTime()]]Help <img style="width:16px" src="help1600.png"></div>
+ 	</div>
+ 	
+ 	<paper-tooltip class="custom-right" style="width:200px;margin-top:10px;position:absolute;right:80px;" position="left" for="tutorial" id="tooltipFirst" manual-mode="true">
+				<b>Welcome to the Recommendation Spheres</b><br><br>
+				Let me show you how you can use this tool. <br><br>
+				<div id="tutorial">
+				<u on-tap="_handleEndTutorial" style="cursor:pointer;float:left;font-size:8px;">EXIT</u>
+				<u on-tap="_handleStartTutorial2" style="cursor:pointer;float:right;font-size:8px;">NEXT</u>
+				</div>
+	</paper-tooltip>
+	
+ 	<paper-tooltip class="custom-right" style="width:200px;margin-top:10px" position="left" for="tutorial" id="tooltipStart" manual-mode="true">
+				<b>Welcome to the Recommendation Spheres</b><br><br>
+				Let me show you how you can use this tool. <br><br>
+				<div id="tutorial">
+				<u on-tap="_handleEndTutorial" style="cursor:pointer;float:left;font-size:8px;">EXIT</u>
+				<u on-tap="_handleStartTutorial2" style="cursor:pointer;float:right;font-size:8px;">NEXT</u>
+				</div>
+	</paper-tooltip>
+	<paper-tooltip class="custom-left" style="width:200px;" position="right" for="right_list" id="tooltipStart2" manual-mode="true">
+				This is the navigation menu<br><br>
+				<div id="tutorial2">
+				<u on-tap="_handleStartTutorial" style="cursor:pointer;float:left;font-size:8px;">BACK</u>
+				<u on-tap="_handleEndTutorial" style="cursor:pointer;;font-size:8px;">EXIT</u>
+				<u on-tap="_handleStartTutorial3" style="cursor:pointer;float:right;font-size:8px;">NEXT</u>
+				</div>
+	</paper-tooltip>
+	<paper-tooltip class="custom-top" style="width:200px;" position= "top" offset="-330" for="menu_left" id="tooltipStart3" manual-mode="true">
+				These are the navigation dropdowns. Click to expand them and look into their content<br><br>
+				<div id="tutorial3">
+				<u on-tap="_handleStartTutorial2" style="cursor:pointer;float:left;font-size:8px;">BACK</u>
+				<u on-tap="_handleEndTutorial" style="cursor:pointer;font-size:8px;">EXIT</u>
+				<u on-tap="_handleStartTutorial4" style="cursor:pointer;float:right;font-size:8px;">NEXT</u>
+				</div>
+	</paper-tooltip>
+	<paper-tooltip class="custom2-left" style="width:250px;" position="right" for="listing1" id="tooltipStart4" manual-mode="true">
+				<b>"My Research Object"</b> shows the Research Object of your own.<br><br>
+				<div id="tutorial4">
+				<u on-tap="_handleStartTutorial3" style="cursor:pointer;float:left;font-size:8px;">BACK</u>
+				<u on-tap="_handleEndTutorial" style="cursor:pointer;font-size:8px;">EXIT</u>
+				<u on-tap="_handleStartTutorial5" style="cursor:pointer;float:right;font-size:8px;">NEXT</u>
+				</div>
+	</paper-tooltip>
+	<paper-tooltip class="custom2-left" style="width:250px;" position="right" for="listing2" id="tooltipStart5" manual-mode="true">
+				<b>"Collaborations"</b> menu is in development<br><br>
+				<div id="tutorial5">
+				<u on-tap="_handleStartTutorial4" style="cursor:pointer;float:left;font-size:8px;">BACK</u>
+				<u on-tap="_handleEndTutorial" style="cursor:pointer;font-size:8px;">EXIT</u>
+				<u on-tap="_handleStartTutorial6" style="cursor:pointer;float:right;font-size:8px;">NEXT</u>
+				</div>
+	</paper-tooltip>
+		<paper-tooltip class="custom2-left" style="width:250px;" position="right" for="listing3" id="tooltipStart6" manual-mode="true">
+				<b>"All Research Objects"</b> shows all the Research Objects stored in the repository. <br><br>
+				<div id="tutorial6">
+				<u on-tap="_handleStartTutorial5" style="cursor:pointer;float:left;font-size:8px;">BACK</u>
+				<u on-tap="_handleEndTutorial" style="cursor:pointer;font-size:8px;">EXIT</u>
+				<u on-tap="_handleStartTutorial7" style="cursor:pointer;float:right;font-size:8px;">NEXT</u>
+				</div>
+	</paper-tooltip>
+		<paper-tooltip class="custom2-left" style="width:250px;" position="right" for="listing4" id="tooltipStart7" manual-mode="true">
+				<b>"Collaborators"</b> menu is in development.<br><br>
+				<div id="tutorial7">
+				<u on-tap="_handleStartTutorial6" style="cursor:pointer;float:left;font-size:8px;">BACK</u>
+				<u on-tap="_handleEndTutorial" style="cursor:pointer;font-size:8px;">EXIT</u>
+				<u on-tap="_handleStartTutorial8" style="cursor:pointer;float:right;font-size:8px;">NEXT</u>
+				</div>
+	</paper-tooltip>
+	<paper-tooltip class="custom2-left" style="width:250px;" position="right" for="listing5" id="tooltipStart8" manual-mode="true">
+				<b>"Related"</b> shows your related scientists, based on the content of your Research Objects. <br><br>
+				<div id="tutorial8">
+				<u on-tap="_handleStartTutorial7" style="cursor:pointer;float:left;font-size:8px;">BACK</u>
+				<u on-tap="_handleEndTutorial" style="cursor:pointer;font-size:8px;">EXIT</u>
+				<u on-tap="_handleStartTutorial9" style="cursor:pointer;float:right;font-size:8px;">NEXT</u>
+				</div>
+	</paper-tooltip>
+		<paper-tooltip class="custom2-left" style="width:250px;" position="right" for="listing6" id="tooltipStart9" manual-mode="true">
+				<b>"All Scientists"</b> shows all the Scientists registered in the repository. <br><br>
+				<div id="tutorial9">
+				<u on-tap="_handleStartTutorial8" style="cursor:pointer;float:left;font-size:8px;">BACK</u>
+				<u on-tap="_handleEndTutorial" style="cursor:pointer;font-size:8px;">EXIT</u>
+				<u on-tap="_handleStartTutorial10" style="cursor:pointer;float:right;font-size:8px;">NEXT</u>
+				</div>
+	</paper-tooltip>
+	</paper-tooltip>
+		<paper-tooltip class="custom-left" style="width:300px;" position="right" for="input-scientist" id="tooltipStart10" manual-mode="true">
+				The search bars filter the results of the menus. Write a term in them and the menus will show the Research Objects and Scientists which contain it.  <br><br>
+				<div id="tutorial10">
+				<u on-tap="_handleStartTutorial9" style="cursor:pointer;float:left;font-size:8px;">BACK</u>
+				<u on-tap="_handleEndTutorial" style="cursor:pointer;font-size:8px;">EXIT</u>
+				<u on-tap="_handleStartTutorial11" style="cursor:pointer;float:right;font-size:8px;">NEXT</u>
+				</div>
+	</paper-tooltip>
+	</paper-tooltip>
+		<paper-tooltip class="custom-left" style="width:200px;" position="right" for="input-scientist" id="tooltipStart11" manual-mode="true">
+				Then, please click in one of the Research Objects to show you its Information Card.  <br><br>
+				<div id="tutorial11">
+				<u on-tap="_handleStartTutorial10" style="cursor:pointer;float:left;font-size:8px;">BACK</u>
+				<u on-tap="_handleEndTutorial" style="cursor:pointer;font-size:8px;">EXIT</u>
+				<u on-tap="_handleStartTutorial12" style="cursor:pointer;float:right;font-size:8px;">NEXT</u>
+				</div>
+	</paper-tooltip>
+		<paper-tooltip class="custom-left" style="width:300px" position="right" for="card" id="tooltipStart12" manual-mode="true">
+				This is the Research Object Information Card. It displays the information below: <br><br>
+					<b>Title</b> of the Research Object, with a link to its ROHUB url. <br><br>
+					<b>Date</b> of creation of the Research Object <br><br>
+					<b>Author</b> or authors of the Research Object <br><br>
+					<b>Main topics:</b> more used concepts of the Research Object.<br><br>
+					<b>Areas of Knowledge</b> related to the Research Object. <br><br>
+					<b>Description</b> of the Research Object<br>
+				 <br><br>
+				<div id="tutorial12">
+				<u on-tap="_handleStartTutorial11" style="cursor:pointer;float:left;font-size:8px;">BACK</u>
+				<u on-tap="_handleEndTutorial" style="cursor:pointer;font-size:8px;">EXIT</u>
+				<u on-tap="_handleStartTutorial13" style="cursor:pointer;float:right;font-size:8px;">NEXT</u>
+				</div>
+	</paper-tooltip>
+	<paper-tooltip class="custom-left" style="width:200px" position="right" for="input-scientist" id="tooltipStart13" manual-mode="true">
+				Now, please click in one of the Scientist to show you its Information Card.  <br><br>
+				<div id="tutorial13">
+				<u on-tap="_handleStartTutorial12" style="cursor:pointer;float:left;font-size:8px;">BACK</u>
+				<u on-tap="_handleEndTutorial" style="cursor:pointer;font-size:8px;">EXIT</u>
+				<u on-tap="_handleStartTutorial14" style="cursor:pointer;float:right;font-size:8px;">NEXT</u>
+				</div>
+	</paper-tooltip>
+		<paper-tooltip class="custom-left" style="width:300px" position="right" for="card" id="tooltipStart14" manual-mode="true">
+				This is the Scientist Information Card. It displays the information below: <br><br>
+					<b>Name</b> of the Researcher. <br><br>
+					<b>Main topics:</b> more used concepts of the Research Objects of the Researcher.<br><br>
+					<b>Areas of Knowledge</b> related to the Research Objects of the Researcher. <br><br>
+					<b>List of Research Objects</b> of the Researcher<br>
+				 <br><br>
+				<div id="tutorial14">
+				<u on-tap="_handleStartTutorial13" style="cursor:pointer;float:left;font-size:8px;">BACK</u>
+				<u on-tap="_handleEndTutorial" style="cursor:pointer;font-size:8px;">EXIT</u>
+				<u on-tap="_handleStartTutorial15" style="cursor:pointer;float:right;font-size:8px;">NEXT</u>
+				</div>
+	</paper-tooltip>
+	<paper-tooltip class="custom-left" style="width:200px;" position="right" for="input-scientist" id="tooltipStart15" manual-mode="true">
+				To get your first recommendation, please drag a Research Object or a Scientist from the menus and drop it to the center of the spheres.  <br><br>
+				<div id="tutorial15">
+				<u on-tap="_handleStartTutorial14" style="cursor:pointer;float:left;font-size:8px;">BACK</u>
+				<u on-tap="_handleEndTutorial" style="cursor:pointer;font-size:8px;">EXIT</u>
+				<u on-tap="_handleStartTutorial16" style="cursor:pointer;float:right;font-size:8px;">NEXT</u>
+				</div>
+	</paper-tooltip>
+	<paper-tooltip class="custom-right" style="width:200px;" position="left" for="right" id="tooltipStart16" manual-mode="true">
+				The inner circle is the <b>Context</b> circle. 
+				The center of the context is the logged in user. 
+				Research Objects and and Researchers may be dropped on it. 
+				The recommendation will be based on the elements which are in the context.
+				<br><br>
+				<div id="tutorial16">
+				<u on-tap="_handleStartTutorial15" style="cursor:pointer;float:left;font-size:8px;">BACK</u>
+				<u on-tap="_handleEndTutorial" style="cursor:pointer;font-size:8px;">EXIT</u>
+				<u on-tap="_handleStartTutorial17" style="cursor:pointer;float:right;font-size:8px;">NEXT</u>
+				</div>
+	</paper-tooltip>
+	<paper-tooltip class="custom-right" style="width:200px;" position="left" for="right" id="tooltipStart17" manual-mode="true">
+				The intermediate and the outer circles are the <b>Recommendation</b> circles. 
+				Is powered by our Solr index and based on the Research Objects topics and places registered with Cogito.
+				Shows related Research Objects to the context.
+				<br><br>
+				<div id="tutorial17">
+				<u on-tap="_handleStartTutorial16" style="cursor:pointer;float:left;font-size:8px;">BACK</u>
+				<u on-tap="_handleEndTutorial" style="cursor:pointer;font-size:8px;">EXIT</u>
+				<u on-tap="_handleStartTutorial18" style="cursor:pointer;float:right;font-size:8px;">NEXT</u>
+				</div>
+	</paper-tooltip>
+	<paper-tooltip class="custom-right" style="width:200px;" position="left" for="right" id="tooltipStart18" manual-mode="true">
+				Also, you can drag and drop Research Objects of the Recommendation to the Context, and click in any of them to display its information.
+				<br><br>
+				<div id="tutorial18">
+				<u on-tap="_handleStartTutorial17" style="cursor:pointer;float:left;font-size:8px;">BACK</u>
+				<u on-tap="_handleEndTutorial" style="cursor:pointer;font-size:8px;">EXIT</u>
+				<u on-tap="_handleStartTutorial19" style="cursor:pointer;float:right;font-size:8px;">NEXT</u>
+				</div>
+	</paper-tooltip>
+	<paper-tooltip class="custom-top" style="width:200px;margin-top:60px;" position="left" for="tutorial" id="tooltipStart19" manual-mode="true">
+				Finally, you can log in or change your user clicking the avatar above.
+				<br><br>
+				<div id="tutorial19">
+				<u on-tap="_handleStartTutorial18" style="cursor:pointer;float:left;font-size:8px;">BACK</u>
+				<u on-tap="_handleEndTutorial" style="cursor:pointer;font-size:8px;">EXIT</u>
+				<u on-tap="_handleStartTutorial20" style="cursor:pointer;float:right;font-size:8px;">NEXT</u>
+				</div>
+	</paper-tooltip>
+	<paper-tooltip class="custom-right" style="width:200px" position="left" for="tutorial" id="tooltipStart20" manual-mode="true">
+		This has been the tutorial of the Recommendation Spheres. Cheers. <br> <br>
+		<div id="tutorial20">
+				<u on-tap="_handleStartTutorial19" style="cursor:pointer;float:left;font-size:8px;">BACK</u>
+				<u on-tap="_handleEndTutorial" style="cursor:pointer;float:right;font-size:8px;">FINISH</u>
+		</div>
+	</paper-tooltip>
+     <iron-ajax 	auto 
+    			url="http://everest.expertsystemlab.com/EverEstSpheres/services/getUser"
+    			content-type="application/json"
+    			last-response="{{iduserresponse}}"
+    			on-response="handleUserResponse"
+    			loading="{{_userLoading}}">
+    </iron-ajax>
+    
+	<div class="menu_left" id="menu_left">
+	<div class="lists">
+		<div class="left_list" id="left_list">
+			<div class="searching">
+				<div class= "toolbar"><b>Research Objects</b></div>
+        			<paper-input ro_input label="search a Research Object..." name="name1" label="name1" id="name1" on-input="submitROSearch" value="{{searchTerm}}"></paper-input>
+			</div>
+			<br><br><br><br>
+			<div class="listing" id="listing1">
+			<div class="type_of_list" on-tap="_toggleCollapse1" style="background-color:[[optionAvalaibleGray(iduser)]];cursor:[[optionAvalaibleCursor(iduser)]];"> My Research Objects </div> 
+				<iron-collapse id="collapse1">
+					 <div class="list_ROs">
+							<iron-ajax id="ajaxPOST" url="[[baseeverestServiceUrl]]/jsonservices/myrolist/" 
+													method="POST" 
+													content-type="application/json" 
+													body='{"creator": "[[iduser]]", "search": "[[searchBarRO]]"}'
+													handle-as="json" 
+													last-response="{{data3}}" 
+													auto></iron-ajax>
+                            <template is="dom-if" if="{{_ajaxResponseEmpty(data3)}}">
+									<div class="no_ros">No Research Objects</div> <br>
+							</template>
+							<iron-list id="itemsList3" selection-enabled items="[[data3]]" selected-items="{{resourceToShow}}"  max-height=500px>
+	                                <template>
+	                                      <div item = [[item]] draggable="true" on-dragstart="_handleDragStart" on-dragend="_handleDragEnd">
+	                                             <div class="pad">
+	                                                   <div class="primary">
+	                                                        <!--<img class="avatar" sizing="contain" src="[[_haySketch(item)]]"></img>-->
+	                                                        [[getMediumLabel(item)]]
+	                                                   </div>
+	                                             </div>
+	                                      </div>
+	                                </template>
+	                       </iron-list>
+                        </div>
+				</iron-collapse>
+	        <div class="type_of_list" id="listing2" on-tap="_toggleCollapse2" style="background-color:[[optionAvalaibleGray(iduser)]];cursor:[[optionAvalaibleCursor(iduser)]];"> Collaborations </div>
+				<iron-collapse id="collapse2">
+					<div class="list_ROs"> <div class="no_ros">No Research Objects</div> <br>
+					</div>
+				</iron-collapse>
+			<div class="type_of_list" id="listing3" on-tap="_toggleCollapse3" style="background-color:#337ab7;cursor:pointer"> All Research Objects </div>
+				<iron-collapse id="collapse3">
+                        <div class="list_ROs">
+                                <iron-ajax url="[[baseeverestServiceUrl]]/jsonservices/rolist/[[searchBarRO]]" last-response="{{data}}" auto></iron-ajax>
+                                        <iron-list id="itemsList" selection-enabled items="[[data]]" selected-items="{{resourceToShow}}"  max-height=500px>
+                                                <template>
+                                                        <div item = [[item]] draggable="true" on-dragstart="_handleDragStart" on-dragend="_handleDragEnd">
+                                                                <div class="pad">
+                                                                        <div class="primary">
+                                                                                <!--<img class="avatar" sizing="contain" src="[[_haySketch(item)]]"></img>-->
+                                                                                [[getMediumLabel(item)]]
+                                                                        </div>
+                                                                </div>
+                                                        </div>
+                                                </template>
+                                        </iron-list>
+                        </div>
+			    </iron-collapse>
+			</div>
+		</div>
+		<div class="right_list" id="right_list">
+		        <div class="searching_scientist">
+                                <div class= "toolbar"><b>Scientists</b></div>
+                            	<paper-input scientist_input label="search a scientist/specialist..." name="name2" label="name2" id="name2" on-input="submitScientistSearch" value="{{searchTerm2}}"></paper-input>
+                        </div>
+			<br><br><br><br>
+			<div class="listing"  id="listing4">
+			<div class="type_of_list" on-tap="_toggleCollapse4" style="background-color:[[optionAvalaibleGray(iduser)]];cursor:[[optionAvalaibleCursor(iduser)]];"> Collaborators </div>
+				<iron-collapse id="collapse4">
+                        <div class="list_scientists"> <div class="no_ros">No Scientists</div> <br>
+                        </div>
+				</iron-collapse>
+			<div class="type_of_list" id="listing5" on-tap="_toggleCollapse5" style="background-color:[[optionAvalaibleGray(iduser)]];cursor:[[optionAvalaibleCursor(iduser)]];"> Related </div>
+				<iron-collapse id="collapse5">
+					   <div class="list_scientists">  
+							<iron-ajax id="ajaxPOST2" 
+										url="[[baseeverestServiceUrl]]/jsonservices/related/" 
+										method="POST" 
+										content-type="application/json" 
+										body='{"creator": "[[iduser]]", "search": "[[searchBarScientist]]"}'
+										handle-as="json" 
+										last-response="{{data4}}" 
+										auto></iron-ajax>
+							 <template is="dom-if" if="{{_ajaxResponseEmpty(data4)}}">
+									<div class="no_ros">No Scientists</div> <br>
+							</template>
+                                        <iron-list id="itemsList4" selection-enabled items="[[data4]]" selected-items="{{resourceToShow}}"  max-height=500px>
+                                                <template>
+                                                        <div item = [[item]] draggable="true" on-dragstart="_handleDragStart" on-dragend="_handleDragEnd">
+                                                                <div class="pad">
+                                                                        <div class="primary">
+                                                                                [[getMediumLabel(item)]]
+                                                                        </div>
+                                                                </div>
+                                                        </div>
+                                                </template>
+                                        </iron-list>
+                        </div>
+				</iron-collapse>
+			<div class="type_of_list" id="listing6" on-tap="_toggleCollapse6" style="background-color:#337ab7;cursor:pointer;"> All Scientists </div>
+				<iron-collapse id="collapse6">
+					<div class="list_scientists">
+                        <iron-ajax url="[[baseeverestServiceUrl]]/jsonservices/authorlist/[[searchBarScientist]]" 
+                        			last-response="{{data2}}" auto></iron-ajax>
+                        <iron-list id="itemsList2" selection-enabled items="[[data2]]" selected-items="{{resourceToShow}}"  max-height=500px>
+                                 <template>
+									<div item = [[item]] draggable="true" on-dragstart="_handleDragStart" on-dragend="_handleDragEnd">
+											<div class="pad">
+												<div class="primary">
+                                                    [[getMediumLabel(item)]]
+												</div>
+											</div>
+									</div>
+                                  </template>
+                        </iron-list>
+					</div>
+				</iron-collapse>
+				</div>
+           </div>
+		</div>
+	<div class="card" id="card">
+		<br>	
+				<div class="subtitle_chng"><b>More information:</b></div>
+				<br>
+				<template is="dom-if" if="{{!_isValid(resourceToShow)}}">
+					<paper-item style="color:#CCCCCC;">Research Object or Scientist not selected</paper-item>
+				</template>
+				<template is="dom-if" if="{{isResearchObject(resourceToShow)}}">
+					<everest-ro-card item-obj="{{resourceToShow}}"></everest-ro-card>
+				</template>
+				<template is="dom-if" if="{{isScientist(resourceToShow)}}">
+					<everest-scientist-card item-obj="{{resourceToShow}}"></everest-scientist-card>
+				</template>
+				<template is="dom-if" if="{{_isValidButNotResearchObjectnorScientist(resourceToShow)}}">
+					<paper-textarea value="{{toJsonStr(resourceToShow)}}" readonly></paper-textarea>
+				</template>
+	</div>
+	</div>
+	<div class="right" id="right">
+        <everest-spheres obj="{{spheresObj}}"
+						iduser="[[iduser]]"
+						iduserlabel="[[iduserlabel]]"
+                       selected="{{resourceToShow}}"
+					   on-spheres-resource-removed="requestNewSpheres"
+                       on-spheres-resource-moved="requestNewSpheres">
+        </everest-spheres>
+    	</div>
+	<iron-ajax id="spheresAjax"
+				url="[[baseeverestServiceUrl]]/jsonservices/"
+				method="POST" content-type="application/json" 
+				body='{"types": [[objType]], "urls": [[spheresRO]], "iduser":"[[iduser]]"}'
+				last-response="{{spheresObj}}"
+				on-error='_handleAjaxError'
+				auto>
+	</iron-ajax>	
+	<a href="http://www.expertsystem.com/"><img class="pie_img1" src="clogo2.png"></a>
+	<a href="http://beta.rohub.org/"><img class="pie_img3" src="http://www.rohub.org/portal/images/ROhub_logo_.png"></a>
+	<paper-spinner alt="Loading spheres" active="[[_userLoading]]">Loading spheres...</paper-spinner>
+	<a href="http://www.expertsystem.com/"><img class="pie_img2" src="http://www.expertsystem.com/wp-content/uploads/2014/05/expertsystem@2x.png"></a>
+
+  
+  </template>
+
+</dom-module>
+
+<script>
+  Polymer({
+
+    is: 'everest-spheres-plus-detail',
+
+    behaviors: [everest.LogBehavior, everest.ObjectInspectorBehavior],
+      
+    properties: {
+        
+      /**
+       */
+      baseeverestServiceUrl: {
+          type: String,
+          value: "http://everest.expertsystemlab.com/EverEstSpheres/services"
+      },
+	  
+	  selected: {
+          type: Object,
+          readOnly: true,
+          notify: true
+      },
+      
+	  spheresRO:{
+		type: String,
+		value: '["default"]'
+	  },
+	
+	  objType:{
+		type: String,
+		value: '["default"]'
+	  },
+	  
+	  iduser:{
+		type: String,
+		value: ""
+	  },
+	  
+	  iduserlabel:{
+		type: String,
+		value: ""
+	  },
+	  
+	  searchBarRO:{
+		type: String,
+		value: ""
+	  },
+	  searchBarScientist:{
+		type: String,
+		value: ""
+	  },
+	  
+	 spheresObj:{
+		type: Object,
+		value: {inner:[],inter:[],outer:[]}
+	 }
+
+    },
+	_toggleCollapse1: function(e) {
+		if (!e.target.classList.contains('list_ROs')) {
+			if(!this.iduser==""){
+				this.$.collapse1.toggle();
+				this.$.collapse2.hide();
+				this.$.collapse3.hide();
+			}
+		}
+	},
+	_toggleCollapse2: function(e) {
+		if (!e.target.classList.contains('list_ROs')) {
+			if(!this.iduser==""){
+				this.$.collapse1.hide();
+				this.$.collapse2.toggle();
+				this.$.collapse3.hide();
+			}
+		}
+	},
+	_toggleCollapse3: function(e) {
+		if (!e.target.classList.contains('list_ROs')) {
+			this.$.collapse1.hide();
+			this.$.collapse2.hide();
+			this.$.collapse3.toggle();
+		}
+	},
+	_toggleCollapse4: function(e) {
+		if (!e.target.classList.contains('list_scientist')) {
+			if(!this.iduser==""){
+				this.$.collapse4.toggle();
+				this.$.collapse5.hide();
+				this.$.collapse6.hide();
+			}
+		}
+	},
+	_toggleCollapse5: function(e) {
+		if (!e.target.classList.contains('list_scientists')) {
+			if(!this.iduser==""){
+				this.$.collapse4.hide();
+				this.$.collapse5.toggle();
+				this.$.collapse6.hide();
+			}
+		}
+	},
+	_toggleCollapse6: function(e) {
+		if (!e.target.classList.contains('list_scientists')) {
+			this.$.collapse4.hide();
+			this.$.collapse5.hide();
+			this.$.collapse6.toggle();
+		}
+	},
+	_toggleCollapseUser: function(e) {
+		if (!e.target.classList.contains('card_user')) {
+			this.$.collapseUser.toggle();
+		}
+	},
+	
+	optionAvalaibleGray: function(usuario){
+		var res = "#337ab7";
+		if(usuario == ""){
+			res = "#D4D2D2";
+		}
+		return res;
+	},
+	
+	userAvalaibleGray: function(usuario){
+		var res = "white";
+		if(usuario == ""){
+			res = "#D4D2D2";
+		}
+		return res;
+	},
+	
+	inicioTutorialFirstTime: function(){
+		if (!localStorage.noFirstVisit) {
+	        console.debug('first time');
+	        this.$.tooltipFirst.show();
+	        localStorage.noFirstVisit = "1";
+		}
+	},
+	
+	optionAvalaibleCursor: function(usuario){
+		var res = "pointer";
+		if(usuario == ""){
+			res = "default";
+		}
+		return res;
+	},
+	userAvalaibleLoggedText: function(usuario){
+		var res = "You are logged in as: ";
+		if(usuario == ""){
+			res = "You are not logged in";
+		}
+		return res;
+	},
+	logoutAvalaibleText: function(usuario){
+		var res = "Change user";
+		if(usuario == ""){
+			res = "Login";
+		}
+		return res;
+	},
+	_ajaxResponseEmpty: function(response){
+		if (response == null){
+			return false;
+		}
+		else{
+			if(response.length > 0){   
+		    	return false;
+			}else{
+		   		return true;
+			}
+		}
+	},
+	
+	 _handleStartTutorial: function(e) {
+		this.$.tooltipStart.show();
+		this.$.tooltipStart2.hide();
+		this.$.tooltipStart3.hide();
+		this.$.tooltipStart4.hide();
+		this.$.tooltipStart5.hide();
+		this.$.tooltipStart6.hide();
+		this.$.tooltipStart7.hide();
+		this.$.tooltipStart8.hide();
+		this.$.tooltipStart9.hide();
+		this.$.tooltipStart10.hide();
+		this.$.tooltipStart11.hide();
+		this.$.tooltipStart12.hide();
+		this.$.tooltipStart13.hide();
+		this.$.tooltipStart14.hide();
+		this.$.tooltipStart15.hide();
+		this.$.tooltipStart16.hide();
+		this.$.tooltipStart17.hide();
+		this.$.tooltipStart18.hide();
+		this.$.tooltipStart19.hide();
+		this.$.tooltipStart20.hide();
+		},
+	_handleStartTutorial2: function(e) {
+		this.$.tooltipFirst.hide();
+		this.$.tooltipStart.hide();
+		this.$.tooltipStart2.show();
+		this.$.tooltipStart3.hide();
+		},
+	_handleStartTutorial3: function(e) {
+		this.$.tooltipStart2.hide();
+		this.$.tooltipStart3.show();
+		this.$.tooltipStart4.hide();
+		},
+	_handleStartTutorial4: function(e) {
+		this.$.tooltipStart3.hide();
+		this.$.tooltipStart4.show();
+		this.$.tooltipStart5.hide();
+		},
+	_handleStartTutorial5: function(e) {
+		this.$.tooltipStart4.hide();
+		this.$.tooltipStart5.show();
+		this.$.tooltipStart6.hide();
+		},
+	_handleStartTutorial6: function(e) {
+		this.$.tooltipStart5.hide();
+		this.$.tooltipStart6.show();
+		this.$.tooltipStart7.hide();
+		},
+	_handleStartTutorial7: function(e) {
+			this.$.tooltipStart6.hide();
+			this.$.tooltipStart7.show();
+			this.$.tooltipStart8.hide();
+		},
+	_handleStartTutorial8: function(e) {
+			this.$.tooltipStart7.hide();
+			this.$.tooltipStart8.show();
+			this.$.tooltipStart9.hide();
+		},
+	_handleStartTutorial9: function(e) {
+			this.$.tooltipStart8.hide();
+			this.$.tooltipStart9.show();
+			this.$.tooltipStart10.hide();
+		},
+	_handleStartTutorial10: function(e) {
+			this.$.tooltipStart9.hide();
+			this.$.tooltipStart10.show();
+			this.$.tooltipStart11.hide();
+		},
+	_handleStartTutorial11: function(e) {
+			this.$.tooltipStart10.hide();
+			this.$.tooltipStart11.show();
+			this.$.tooltipStart12.hide();
+		},
+	_handleStartTutorial12: function(e) {
+			this.$.tooltipStart11.hide();
+			this.$.tooltipStart12.show();
+			this.$.tooltipStart13.hide();
+		},
+	_handleStartTutorial13: function(e) {
+			this.$.tooltipStart12.hide();
+			this.$.tooltipStart13.show();
+			this.$.tooltipStart14.hide();
+		},
+	_handleStartTutorial14: function(e) {
+			this.$.tooltipStart13.hide();
+			this.$.tooltipStart14.show();
+			this.$.tooltipStart15.hide();
+		},
+	_handleStartTutorial15: function(e) {
+			this.$.tooltipStart14.hide();
+			this.$.tooltipStart15.show();
+			this.$.tooltipStart16.hide();
+		},
+	_handleStartTutorial16: function(e) {
+			this.$.tooltipStart15.hide();
+			this.$.tooltipStart16.show();
+			this.$.tooltipStart17.hide();
+		},
+		_handleStartTutorial17: function(e) {
+			this.$.tooltipStart16.hide();
+			this.$.tooltipStart17.show();
+			this.$.tooltipStart18.hide();
+		},
+		_handleStartTutorial18: function(e) {
+			this.$.tooltipStart17.hide();
+			this.$.tooltipStart18.show();
+			this.$.tooltipStart19.hide();
+		},
+		_handleStartTutorial19: function(e) {
+			this.$.tooltipStart18.hide();
+			this.$.tooltipStart19.show();
+			this.$.tooltipStart20.hide();
+		},
+		_handleStartTutorial20: function(e) {
+			this.$.tooltipStart19.hide();
+			this.$.tooltipStart20.show();
+		},
+		_handleEndTutorial: function(e) {
+			this.$.tooltipFirst.hide();
+			this.$.tooltipStart.hide();
+			this.$.tooltipStart2.hide();
+			this.$.tooltipStart3.hide();
+			this.$.tooltipStart4.hide();
+			this.$.tooltipStart5.hide();
+			this.$.tooltipStart6.hide();
+			this.$.tooltipStart7.hide();
+			this.$.tooltipStart8.hide();
+			this.$.tooltipStart9.hide();
+			this.$.tooltipStart10.hide();
+			this.$.tooltipStart11.hide();
+			this.$.tooltipStart12.hide();
+			this.$.tooltipStart13.hide();
+			this.$.tooltipStart14.hide();
+			this.$.tooltipStart15.hide();
+			this.$.tooltipStart16.hide();
+			this.$.tooltipStart17.hide();
+			this.$.tooltipStart18.hide();
+			this.$.tooltipStart19.hide();
+			this.$.tooltipStart20.hide();
+		},
+    _handleSpheresChange: function(e) {
+        this.requestNewSpheres();
+    },
+    
+      
+	_handleDragStart: function(e) {
+          // this /e.target is the source node (the sphere being dragged)
+          console.debug("Handling dragstart for ", e);
+          e.target.style.opacity = '0.4';
+          this.classList.add('droptarget');
+		  console.debug("target: ", e.target);
+
+          //restricts the type of drag. Possible values: none, copy, copyLink, copyMove,
+          // link, linkMove, move, all and uninitialized
+          e.dataTransfer.effectAllowed = 'move';
+		  console.debug("e.target.item: ", e.target.item);
+          const domString = JSON.stringify(e.target.item);
+		  console.debug("JSON: ", domString);
+          try {
+              e.dataTransfer.setData("application/json", domString);
+          } catch (err) {
+              console.debug("Failed to set dataTransfer data");
+              /* in IE10 the data type *must* be 'text', so try it this way...
+                                                                            see http://stackoverflow.com/questions/26213011/html5-dragdrop-issue-in-internet-explorer-datatransfer-property-access-not-pos
+              */
+              e.dataTransfer.setData("text", domString);
+	      console.debug("Text ", domString);
+          }
+          console.debug("set dataTrasfer.data to application/json and the everest-spheres-resource.item ", e.target.item, e);
+     },
+	 
+	 _handleDragEnd: function(e) {
+          console.debug("Handling dragend for ", e);
+          e.target.style.opacity = '1.0';
+     },
+	 submitROSearch: function() {
+		  console.debug("Searching RO: ", this.$.name1.value);
+		  this.searchBarRO = this.$.name1.value;
+     },
+	  submitScientistSearch: function() {
+		  console.debug("Searching Scientist: ", this.$.name2.value);
+		  this.searchBarScientist = this.$.name2.value;
+     },
+	
+	_haySketch: function(item) {
+		  var res;
+		  if (item != null){
+			if (item.relatedImage == null){
+					res = "https://static1.squarespace.com/static/536063dee4b04c365eb473be/t/54078c96e4b003ed9c170735/1409780886590/small-team-starter-package-icon";
+			}
+			else{
+					res = item.relatedImage;
+			}
+		}
+		  return res;
+	},
+	 handleResponse: function(e) {
+		 this.iduser = e.detail.response;
+    },
+	 handleUserResponse: function(e) {
+		 this.iduser = e.detail.response.id;
+		 this.iduserlabel = e.detail.response.label;
+    },
+    requestNewSpheres: function() {
+			var rec = "";
+			var types = "[";
+			var res = "[";
+			 if (this.spheresObj && this.spheresObj.inner) {
+				console.debug("inner", this.spheresObj.inner);
+				console.debug("inner length", this.spheresObj.inner.length);
+				for (var i = 0; i < this.spheresObj.inner.length; i++) {
+					rec = this.spheresObj.inner[i].recommended;
+					types = types + '"' + rec['@type'] + '",';
+					res = res + '"' + rec.url + '",';
+				}
+			 }
+			 console.debug("TYPES: ", types);
+			 console.debug("RES: ", res);
+			 if (types.length > 1){
+				this.objType = types.substring(0, types.length - 1) + "]";
+				this.spheresRO = res.substring(0, res.length - 1) + "]";
+			}
+			else{
+				this.objType = types + '"default"]';
+				this.spheresRO = res + '"default"]';
+			}
+			 var conjunto = '"types": ' + this.objType + ', "urls": ' + this.spheresRO;
+			 console.debug("Calling spheres with: ", conjunto);
+			 this.$.spheresAjax.generateRequest(); //now this happens automatically
+    },
+      
+    toJsonStr: function(obj) {
+          return JSON.stringify(obj, null, 4);
+    },
+
+    _handleAjaxError: function(e, detail) {
+          console.error("Ajax error", detail);
+          //this.fire("ajax-error", detail);
+    },
+
+    _isValid: function(obj) {
+          if (obj) return true;
+          else return false;
+    },
+
+    _isValidButNotResearchObjectnorScientist: function(obj) {
+          return this._isValid(obj) && !this.isResearchObject(obj) && !this.isScientist(obj);
+    },
+  });
+
+</script>

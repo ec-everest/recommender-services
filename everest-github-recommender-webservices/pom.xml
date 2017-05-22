@@ -1,0 +1,213 @@
+<?xml version="1.0"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>net.expertsystem.everest</groupId>
+    <artifactId>everest-github-recommender</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+  </parent>
+  
+
+  <artifactId>everest-github-recommender-webservices</artifactId>
+  <packaging>war</packaging>
+  <name>everest-github-recommender-webservices</name>
+  
+   <build>
+        <finalName>EverEstSpheres</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.5.1</version>
+                <inherited>true</inherited>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+			<!-- Tomcat plugin -->  
+			<plugin>  
+			 <groupId>org.apache.tomcat.maven</groupId>  
+			 <artifactId>tomcat7-maven-plugin</artifactId>  
+			 <version>2.2</version> 
+			 <configuration>			         
+          		<url>http://172.16.32.89:8080/manager/text</url>
+          	<path>/EverEstSpheres</path>
+        	</configuration> 					  			
+			</plugin>             
+        </plugins>
+    </build>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.glassfish.jersey</groupId>
+                <artifactId>jersey-bom</artifactId>
+                <version>${jersey.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>  
+        <dependency>
+            <groupId>org.glassfish.jersey.containers</groupId>
+            <artifactId>jersey-container-servlet-core</artifactId>
+            <!-- use the following artifactId if you don't need servlet 2.x compatibility -->
+            <!-- artifactId>jersey-container-servlet</artifactId -->
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-moxy</artifactId>
+        </dependency>     
+       <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20151123</version>
+        </dependency>
+        <dependency>
+			<groupId>org.apache.solr</groupId>
+			<artifactId>solr-solrj</artifactId>
+			<version>6.2.1</version>
+		</dependency>       
+			<dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>jcl-over-slf4j</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+                 <dependency>
+   			<groupId>org.apache.jena</groupId>
+    		<artifactId>jena-arq</artifactId>
+    		<version>3.1.0</version>
+		</dependency>
+		<dependency>
+    		<groupId>org.apache.jena</groupId>
+    		<artifactId>jena-core</artifactId>
+    		<version>3.1.0</version>
+		</dependency>
+		<dependency>
+    		<groupId>org.apache.jena</groupId>
+    		<artifactId>jena-cmds</artifactId>
+    		<version>3.1.0</version>
+		</dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+        
+    <!-- OAuth Dependency -->
+    <dependency>
+      <artifactId>org.apache.oltu.oauth2.common</artifactId>
+      <groupId>org.apache.oltu.oauth2</groupId>
+      <version>${oltu.oauth2.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.oltu.oauth2</groupId>
+      <artifactId>org.apache.oltu.oauth2.client</artifactId>
+      <version>${oltu.oauth2.version}</version>
+    </dependency>       
+    
+    <dependency>
+      <groupId>org.apache.oltu.oauth2</groupId>
+      <artifactId>org.apache.oltu.oauth2.jwt</artifactId>
+      <version>${oltu.oauth2.version}</version>
+    </dependency>
+
+<!--     OpenId Connect Dependency -->
+<!--     <dependency> -->
+<!--       <groupId>org.apache.oltu.openidconnect</groupId> -->
+<!--       <artifactId>org.apache.oltu.openidconnect.common</artifactId> -->
+<!--       <version>${oltu.oidc.version}</version> -->
+<!--     </dependency> -->
+
+<!--     <dependency> -->
+<!--       <groupId>org.apache.oltu.openidconnect</groupId> -->
+<!--       <artifactId>org.apache.oltu.openidconnect.client</artifactId> -->
+<!--       <version>${oltu.oidc.version}</version> -->
+<!--     </dependency> -->
+
+<!--     OAuth Dynamic Registration Dependency -->
+
+    <dependency>
+      <groupId>org.apache.oltu.oauth2</groupId>
+      <artifactId>org.apache.oltu.oauth2.dynamicreg.client</artifactId>
+      <version>${oltu.oauth2.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.oltu.oauth2</groupId>
+      <artifactId>org.apache.oltu.oauth2.dynamicreg.common</artifactId>
+      <version>${oltu.oauth2.version}</version>
+    </dependency>    
+    
+    <!--  URL Rewrite -->
+    <dependency>
+      <groupId>org.tuckey</groupId>
+      <artifactId>urlrewritefilter</artifactId>
+      <version>3.1.0</version>
+      <scope>runtime</scope>
+    </dependency>
+    
+<!-- 	<dependency> -->
+<!-- 	  <groupId>org.apache.tomcat.maven</groupId> -->
+<!-- 	  <artifactId>tomcat7-maven-plugin</artifactId> -->
+<!-- 	  <version>2.2</version> -->
+<!-- 	  <type>maven-plugin</type> -->
+<!-- 	</dependency>     -->
+
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <version>${servlet-api.version}</version>
+      <scope>provided</scope>
+    </dependency>
+        
+    <dependency>
+      <artifactId>standard</artifactId>
+      <groupId>taglibs</groupId>
+      <version>1.1.2</version>
+      <type>jar</type>
+      <scope>runtime</scope>
+    </dependency>	
+  				
+		  <dependency>
+		    <groupId>org.apache.logging.log4j</groupId>
+		    <artifactId>log4j-api</artifactId>
+		    <version>2.7</version>
+		  </dependency>
+		  <dependency>
+		    <groupId>org.apache.logging.log4j</groupId>
+		    <artifactId>log4j-core</artifactId>
+		    <version>2.7</version>
+		  </dependency>	         
+		<dependency>
+		    <groupId>org.apache.logging.log4j</groupId>
+		    <artifactId>log4j-web</artifactId>
+		    <version>2.7</version>
+		    <scope>runtime</scope>
+  		</dependency>    
+	 
+    </dependencies>
+    
+    <properties>
+        <jersey.version>2.24</jersey.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>    
+	    <oltu.oauth2.version>1.0.2</oltu.oauth2.version>
+	    <oltu.oidc.version>0.0.1-SNAPSHOT</oltu.oidc.version>
+	    <org.springframework.version>3.2.4.RELEASE</org.springframework.version>
+	    <servlet-api.version>3.1.0</servlet-api.version>
+	    <slf4j.version>1.7.18</slf4j.version>
+<!-- 	    <jettyVersion>9.2.19.v20160908</jettyVersion>     -->
+  </properties>    
+    
+</project>

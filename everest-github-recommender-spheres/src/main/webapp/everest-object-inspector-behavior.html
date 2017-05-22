@@ -1,0 +1,326 @@
+<link rel="import" href="bower_components/polymer/polymer.html">
+<link rel="import" href="bower_components/iron-meta/iron-meta.html">
+<link rel="import" href="bower_components/iron-icons/notification-icons.html">
+
+<script>
+ window.everest = window.everest || {};
+ /**
+  * Provides methods for inspecting a JSON object, determining the type 
+  * of the object and extracting default values, such as labels, 
+  * or depictions.
+  * 
+  * @polymerBehavior everest.ObjectInspectorBehavior 
+  */
+ everest.ObjectInspectorBehavior = {
+     properties: {
+         /**
+          * @type {!Polymer.IronMeta}
+          */
+         _ironMeta: {
+             value: Polymer.Base.create('iron-meta', {type: 'iconset'}),
+             observer: '_updateIronMeta'
+         }
+     },
+
+     _updateIronMeta: function() {
+         var iconset = this._ironMeta;
+     },
+
+     getMediumLabel: function(object, defaultValue) {
+         return this._calcLabel(37, object, defaultValue);
+     },
+
+     _calcLabel: function(length, object, defaultValue) {
+         if (object) {
+             if (object.label) return this.strPreview(object.label, length);
+             if (object.title) return this.strPreview(object.title, length);
+             if (this.isSocialMediaItem(object)) {
+                 return "" + this.socMediaTextPreview(object, length);
+             }
+             if (this.isSearchString(object)) {
+                 return this.strPreview(object.value, length);
+             }
+			 if (this.isResearchObject(object)) {
+                 return this.strPreviewRO(object.value, length);
+             }
+			 if (this.isScientist(object)) {
+                 return this.strPreview(object.value, length);
+             }
+             if (this.isASRAnnotation(object)) {
+                 return "" + this.asrTextPreview(object, length);
+             }
+             if (this.isSubtitleSegment(object)) {
+                 return "" + this.subtitleTextPreview(object, length);
+             }
+             if (this.isOCRAnnotation(object)) {
+                 return "" + this.ocrTextPreview(object, length);
+             }
+         } return defaultValue;
+     },
+     
+     /**
+      * Returns a short label for identifying the object. If no such label is found, 
+      * returns the defaultValue.
+      */
+     getShortLabel: function(object, defaultValue) {
+         return this._calcLabel(20, object, defaultValue);
+     },
+
+     /**
+      * Returns a url for a small depiction for the given object. This may be a depiction url 
+      * included by some everest objects, or it may be a default depiction for a given object 
+      * type.
+      */
+     getThumbnailUrl: function(object, defaultValue) {
+         if (object) {
+             if (object.relatedImage) {
+//                 console.debug("Found relatedImage as thumbnail", object.relatedImage);
+                 return object.relatedImage;
+             } else if (object.depictions && object.depictions.length > 0) {
+//                 console.debug("Found depiction array as thumbnail", object.depictions);                 
+                 return object.depictions[0];
+             } else if (this.isScientist(object)) { 
+            	 return "icon-user.png"
+//                  return "https://jukeperformance.com/wp-content/uploads/2016/07/simplified-genetics-researcher-icon-300x300.png";
+			 } else if (this.isResearchObject(object)){
+				 return "https://static1.squarespace.com/static/536063dee4b04c365eb473be/t/54078c96e4b003ed9c170735/1409780886590/small-team-starter-package-icon";
+             }
+         }
+         console.log("Could not determine thumbnail for object", object);
+         return defaultValue;
+     },
+
+     resourceTypeLabel: function(object) {
+         if (object) {
+             if (this.isSocialMediaItem(object)) {
+                 return "social-media post";
+             } else if (this.isNewsArticleItem(object)) {
+                 return "news article";
+             } else if (this.isTVProgItem(object)) {
+                 return "TV program";
+             } else if (this.isSearchString(object)) {
+                 return "search string";
+             } else if (this.isASRAnnotation(object)) {
+                 return "ASR annotation";
+			 } else if (this.isResearchObject(object)) {
+                 return "Research Object";
+			 } else if (this.isScientist(object)){
+				 return "Scientist";
+             } else if (this.isSubtitleSegment(object)) {
+                 return "Subtitle segment";
+             } else if (this.isOCRAnnotation(object)) {
+                 return "OCR annotation";
+             } else if (this.isEntityAnnotation(object)) {
+                 return "Entity Annotation";
+             } else if (this.isKBEntity(object)) {
+                 return "Knowledge Base Entity";
+             } else {
+                 console.warn("Unknown type for ", object);
+                 return "unknown type";
+             }
+         } else {
+             return "empty data";
+         }
+     },
+     
+     _DEFAULT_ICONSET: 'https://static1.squarespace.com/static/536063dee4b04c365eb473be/t/54078c96e4b003ed9c170735/1409780886590/small-team-starter-package-icon',
+        
+     _getObjectTypeUrl: function(object) {
+         
+     },
+
+     geteverestObjectType: function(objecct) {
+         object.type
+     },
+
+     isMediaItem: function(object) {
+         return this.isSocialMediaItem(object) || this.isNewsArticleItem(object) || this.isTVProgItem(object);
+     },
+
+     isKBEntity: function(object) {
+         if (object && object['@type'] && object['@type'] === "http://everest.eu/vocab/kbEntity") {
+             return true;
+         } else return false;
+     },
+
+     getKBEntityLabel: function(object) {
+         if (this.isKBEntity(object)) {
+             if (object.label && object.label.length > 0) {
+                 return object.label;
+             } else {
+                 return object.url;
+             }
+         } else {
+             console.error("Not a KBEntity", object);
+             if (object && object.label) return object.label;
+             else if (object && object.url) return object.url;
+             else if (object) return 'unknown data';
+             else return 'null data';
+         }
+     },
+
+     isSearchString: function(object) {
+         if (object && object['@type'] &&
+             object['@type'] === "http://everest.eu/vocab/searchString") {
+             return true;
+         } else return false;
+     },
+
+     isASRAnnotation: function(object) {
+         if (object && object['@type'] &&
+             object['@type'] === "http://everest.eu/vocab/ASRAnnotation") {
+             return true;
+         } else return false;
+     },
+
+     isSubtitleSegment: function(object) {
+         if (object && object['@type'] &&
+             object['@type'] === "http://everest.eu/vocab/SubtitleSegment") {
+             return true;
+         } else return false;
+     },
+
+     isEntityAnnotation: function(object) {
+         if (object && object['@type'] &&
+             object['@type'] === "http://everest.eu/vocab/EntityAnnotation") {
+             return true;
+         } else return false;
+     },
+
+     isOCRAnnotation: function(object) {
+         if (object && object['@type'] &&
+             object['@type'] === "http://everest.eu/vocab/OCRAnnotation") {
+             return true;
+         } else return false;
+     },
+     
+     /**
+      * Returns whether two resource objects refer to the same resource
+      */
+     referToSameResource: function(resA, resB) {
+         if (resA && resB){
+             if (resA.url && resB.url) return resA.url === resB.url;
+             else return false;
+         } else return false;
+     },
+     
+     isSocialMediaItem: function(object) {
+         if (object && object.url) {
+             return this.isSocialMediaItemUrl(object.url);
+         } else return false;
+     },
+	 isResearchObject: function(object) {
+		 if (object && object['@type'] &&
+             object['@type'] === "ResearchObject") {
+             return true;
+         } else return false;
+	 },
+	 isScientist: function(object) {
+		 if (object && object['@type'] &&
+             object['@type'] === "Scientist") {
+             return true;
+         } else return false;
+	 },
+     isSocialMediaItemUrl: function(url) {
+         if (url) {
+             const prefix = "http://vico-research.com/social/";
+             return url.lastIndexOf(prefix, 0) === 0;
+//             return url.startsWith(prefix);
+         } else return false;
+     },
+     
+     isNewsArticleItem: function(object) {
+         if (object && object.url) {
+             return this.isNewsArticleItemUrl(object.url);
+         } else return false;
+     },
+
+     isNewsArticleItemUrl: function(url) {
+         if (url) {
+             const prefix = "http://ijs.si/article/";
+             return url.lastIndexOf(prefix, 0) === 0;
+//             return url.startsWith(prefix);
+         } else return false;
+     },
+
+     isTVProgItem: function(object) {
+         if (object && object['@type'] &&
+             (object['@type'] === "http://everest.eu/vocab/MediaResource" ||
+              object['@type'] === "http://www.w3.org/ns/ma-ont#MediaResource")) {
+             return true;
+         } else return false;
+     },
+
+     isTVProgItemUrl: function(url)  {
+         if (url) {
+             const prefix = "http://zattoo.com/program";
+             return url.lastIndexOf(prefix, 0) === 0;
+//             return url.startsWith(prefix);
+         } else return false;
+     },
+
+     newsArticleTextPreview: function(object, length) {
+         if (object && object.title) {
+             return this.strPreview(object.title, length);
+         } else return "news";
+     },
+     socMediaTextPreview: function(object, length) {
+         if (object && object.content.full) {
+             return this.strPreview(object.content.full, length);
+         } else return object.sourceType;
+     },
+     
+     asrTextPreview: function(object, length) {
+         if (object && object.recognizedText) {
+             return this.strPreview(object.recognizedText, length);
+         } else return "Empty ASR";
+     },
+
+     subtitleTextPreview: function(object, length) {
+         if (object && object.text) {
+             return this.strPreview(object.text, length);
+         } else return "Empty Subtitle";
+     },
+
+     ocrTextPreview: function(object) {
+         if (object && object.recognizedText) {
+             return this.strPreview(object.recognizedText, 20);
+         } else return "Empty OCR";
+     },
+
+     strPreview: function(str, maxLength) {
+         if (maxLength) {
+             if (maxLength < 1) maxLength = 20;
+         } else maxLength = 20;
+         if (str) {
+//             console.debug("string length: ", str.length);
+             if (str.length > maxLength) {
+                 return str.substring(0, maxLength) + "...";
+             } else {
+                 return str;
+             }
+         } else return "";
+     },
+     
+     strPreviewRO: function(str, maxLength) {
+         if (maxLength) {
+             if (maxLength < 1) maxLength = 20;
+         } else maxLength = 20;
+         if (str) {
+//             console.debug("string length: ", str.length);
+             if (str.length > maxLength) {
+            	 if (str.startsWith("http")){
+                 	return "..." +  str.replace("http://sandbox.rohub.org/rodl/ROs", "");
+            	 }
+            	 else{
+            		return str.substring(0, maxLength) + "...";
+            	 }
+             } else {
+                 return str;
+             }
+         } else return "";
+     }
+
+     
+ }
+</script>

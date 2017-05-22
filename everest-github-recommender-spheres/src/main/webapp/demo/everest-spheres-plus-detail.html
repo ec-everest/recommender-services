@@ -1,0 +1,46 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 Expert System Iberia. All rights reserved.
+-->
+<html>
+  <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+      <title>everest-spheres-plus-detail Demo</title>
+      <script src="../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+      <link rel="import" href="../everest-spheres-plus-detail.html">
+
+      <style is="custom-style">
+       :root {
+           --error-color: red;
+           --inner-color: #ACD1E9;
+           --center-color: #ffffff;           
+           --separator-color: #dbdbdb;
+           --outer-color: #C1DAD6;
+           --inter-color: #F5FAFA;
+           --center-color-2: #c6f;
+       }
+       body {
+           background-color: var(--paper-grey-50);
+       }
+       #cards {
+           @apply(--layout-vertical);
+           @apply(--center-justified);
+           max-width: 400px;
+           margin-left: auto;
+           margin-right: auto;
+       }
+      </style>
+
+  </head>
+  <body unresolved>
+
+      <h3>An example of <code>&lt;EverEst-spheres&gt;</code></h3>
+      <everest-spheres-plus-detail></everest-spheres-plus-detail>
+      
+      <script>
+      </script>
+
+  </body>
+</html>
