@@ -1,4 +1,7 @@
 # recommender-services
+
+For a complete complete description and deployment of this tools and other research objects components visit http://everest.expertsystemlab.com
+
 The recommender system suggests research objects that might be of interest according to user’s research interests. The recommender system follows a content-based approach in the sense that it compares the research object content with the user interest to draw the list of recommended items. 
 
 The recommender system has a rest API and a web user interface called Collaboration Spheres. The collaboration Spheres eases the creation of the user interests, by enabling drag and drop of research objects and scientist to the user interests, and allows to visualize the suggested research object in a very intuitive way. 
